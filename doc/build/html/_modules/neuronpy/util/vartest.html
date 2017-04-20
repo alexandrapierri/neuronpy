@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.vartest &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.vartest</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Variable testing procedures.</span>
+
+<span class="sd">Utility procedures to evaluate variables to determine if they pass simple</span>
+<span class="sd">tests. These tests are typically to ensure that a variable is of a particular</span>
+<span class="sd">type and a particular format. These methods raise informative exceptions </span>
+<span class="sd">if they fail.</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-02-05): initial version</span>
+
+<span class="sd">EXAMPLES:</span>
+
+<span class="sd">Test that a variable is greater than 0.::</span>
+
+<span class="sd">    x = 2</span>
+<span class="sd">    greater_than(x, 0)</span>
+<span class="sd">    </span>
+<span class="sd">This does not raise an exception. This shows that `x` may be an `int` or `x`</span>
+<span class="sd">may be a `float`. Try a negative value.::</span>
+
+<span class="sd">    &gt;&gt;&gt; x = -2</span>
+<span class="sd">    &gt;&gt;&gt; greater_than(x, 0)</span>
+<span class="sd">    The variable tested needs to be &gt; 0.</span>
+<span class="sd">    The variable tested is of &lt;type &#39;int&#39;&gt; and</span>
+<span class="sd">    has a wrong value of -2.</span>
+
+<span class="sd">In this case, the error reported is fairly informative, but note that it can</span>
+<span class="sd">be made more informative by telling us the name of the parameter. The next</span>
+<span class="sd">example tries a different format altogether and passes in the name of the</span>
+<span class="sd">variable so that the user understands which variable is in error.::</span>
+
+<span class="sd">    &gt;&gt;&gt; some_var=&#39;abc&#39;</span>
+<span class="sd">    &gt;&gt;&gt; greater_than(some_var, 0, &#39;some_var&#39;)</span>
+<span class="sd">    some_var needs to be &gt; 0.</span>
+<span class="sd">    some_var is of &lt;type &#39;str&#39;&gt; and has a wrong value of abc.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<div class="viewcode-block" id="greater_than"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.greater_than">[docs]</a><span class="k">def</span> <span class="nf">greater_than</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is a float and is</span>
+<span class="sd">    greater than a number.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">    </span>
+<span class="sd">    :type test_var: float or int</span>
+<span class="sd">    </span>
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">test_var</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">test_var</span> <span class="o">&lt;=</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">SyntaxError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;The variable tested&#39;</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%(a)s</span><span class="s"> needs to be &gt; </span><span class="si">%f</span><span class="s">.&#39;</span><span class="o">%</span><span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="n">val</span><span class="p">}</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%(a)s</span><span class="s"> is of </span><span class="si">%(b)s</span><span class="s"> and has a wrong value of </span><span class="si">%(c)s</span><span class="s">.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+        <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">test_var</span><span class="p">),</span> <span class="s">&#39;c&#39;</span><span class="p">:</span><span class="n">test_var</span> <span class="p">}</span>
+        <span class="k">raise</span>
+        </div>
+<div class="viewcode-block" id="greater_than_or_equal"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.greater_than_or_equal">[docs]</a><span class="k">def</span> <span class="nf">greater_than_or_equal</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is a float and is</span>
+<span class="sd">    greater than zero.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">    </span>
+<span class="sd">    :type test_var: float or int</span>
+<span class="sd">    </span>
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">test_var</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">test_var</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">SyntaxError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;The variable tested&#39;</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%(a)s</span><span class="s"> needs to be &gt;= 0.&#39;</span><span class="o">%</span><span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">}</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%(a)s</span><span class="s"> is of </span><span class="si">%(b)s</span><span class="s"> and has a wrong value of </span><span class="si">%(c)s</span><span class="s">.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+        <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">test_var</span><span class="p">),</span> <span class="s">&#39;c&#39;</span><span class="p">:</span><span class="n">test_var</span> <span class="p">}</span>
+        <span class="k">raise</span>
+        </div>
+<div class="viewcode-block" id="inrange"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.inrange">[docs]</a><span class="k">def</span> <span class="nf">inrange</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is a float and is</span>
+<span class="sd">    greater than or equal to min and less than or</span>
+<span class="sd">    equal to max.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">    </span>
+<span class="sd">    :type test_var: float or int</span>
+<span class="sd">    </span>
+<span class="sd">    :param min: Minimum value</span>
+<span class="sd">    :type min: float or int</span>
+
+<span class="sd">    :param max: Maximum value</span>
+<span class="sd">    :type max: float or int</span>
+
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">test_var</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">test_var</span> <span class="o">&lt;</span> <span class="nb">min</span> <span class="ow">or</span> <span class="n">test_var</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">SyntaxError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&quot; &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;The variable</span><span class="si">%(a)s</span><span class="s"> needs to be </span><span class="si">%(b)f</span><span class="s"> &lt;= x &lt;= </span><span class="si">%(c)f</span><span class="s">&#39;</span> <span class="o">%</span> \
+                <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">min</span><span class="p">,</span> <span class="s">&#39;c&#39;</span><span class="p">:</span><span class="nb">max</span><span class="p">}</span>
+        <span class="k">print</span> <span class="s">&#39;</span><span class="si">%(a)s</span><span class="s"> is of </span><span class="si">%(b)s</span><span class="s"> and has a wrong value of </span><span class="si">%(c)s</span><span class="s">.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+                <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">test_var</span><span class="p">),</span> <span class="s">&#39;c&#39;</span><span class="p">:</span><span class="n">test_var</span> <span class="p">}</span>
+        <span class="k">raise</span>
+        
+        </div>
+<div class="viewcode-block" id="isbool"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.isbool">[docs]</a><span class="k">def</span> <span class="nf">isbool</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is an explicit boolean (True or False) value.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">    </span>
+<span class="sd">    :type test_var: bool</span>
+<span class="sd">        </span>
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">test_var</span> <span class="ow">is</span> <span class="bp">True</span> <span class="ow">or</span> <span class="n">test_var</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">SyntaxError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&quot; &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;The variable</span><span class="si">%s</span><span class="s"> needs to be a True or False value.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">raise</span>
+</div>
+<div class="viewcode-block" id="isint"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.isint">[docs]</a><span class="k">def</span> <span class="nf">isint</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is an integer.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">    </span>
+<span class="sd">    :type test_var: int</span>
+<span class="sd">        </span>
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">AssertionError</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&quot; &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;The variable</span><span class="si">%s</span><span class="s"> needs to be an integer.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">raise</span>
+</div>
+<span class="k">def</span> <span class="nf">inlist</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">test_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&quot; &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span>
+        <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;The variable</span><span class="si">%s</span><span class="s"> is equal to </span><span class="si">%s</span><span class="s"> and needs </span><span class="se">\</span>
+<span class="s">                to be one of </span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">test_var</span><span class="p">,</span> <span class="n">valid_list</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+
+<div class="viewcode-block" id="is1Dvector"><a class="viewcode-back" href="../../../vartest.html#neuronpy.util.vartest.is1Dvector">[docs]</a><span class="k">def</span> <span class="nf">is1Dvector</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Tests to see that `test_var` is a 1-dimensional list or numpy array.</span>
+<span class="sd">    </span>
+<span class="sd">    :param test_var: the variable to test</span>
+<span class="sd">            </span>
+<span class="sd">    :param name: the name of the parameter to help inform the user</span>
+<span class="sd">        which variable is problematic, if it does not pass.</span>
+<span class="sd">               </span>
+<span class="sd">    :type name: string; default None</span>
+<span class="sd">    </span>
+<span class="sd">    :throws: exception if the test_var does not meet the</span>
+<span class="sd">        requirements and describes the problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span> <span class="ow">and</span> \
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_var</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">)</span> <span class="ow">or</span> \
+                <span class="nb">len</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">test_var</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s">&quot; &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;The variable</span><span class="si">%s</span><span class="s"> needs to be a 1-dimensionl python list or numpy array.</span><span class="se">\n</span><span class="s">&#39;</span> \
+            <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">raise</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

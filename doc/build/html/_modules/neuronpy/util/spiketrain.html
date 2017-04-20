@@ -1,0 +1,1192 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.spiketrain &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.spiketrain</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Spike train utility methods.</span>
+
+<span class="sd">Utility methods for reading spike train files as well as to analyze spike train </span>
+<span class="sd">matrices and vectors.</span>
+
+<span class="sd">.. seealso::</span>
+<span class="sd">    :class:`~neuronpy.graphics.spikeplot.SpikePlot` for visualization of spike </span>
+<span class="sd">    trains.</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-03-01): initial version</span>
+<span class="sd">- THOMAS MCTAVISH (2011-05-03): Additions mostly for synchrony analysis and </span>
+<span class="sd">    filtering. Refactored as ``spiketrain`` instead of ``spiketrainutil``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, </span>
+<span class="c"># http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">bisect</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">izip</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">listutil</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">vartest</span>
+<span class="kn">from</span> <span class="nn">neuronpy.math</span> <span class="kn">import</span> <span class="n">kernel</span> <span class="k">as</span> <span class="n">mathkernel</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+
+        
+<span class="k">def</span> <span class="nf">_index</span><span class="p">(</span><span class="n">a_list</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Locate the leftmost value of an ascending sorted list exactly equal </span>
+<span class="sd">    to ``val``.</span>
+<span class="sd">    :param a_list: the sorted list to search.</span>
+<span class="sd">    :param val: The value to search for.</span>
+<span class="sd">    :return: The index where this value occurs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">a_list</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a_list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">val</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">i</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span>
+
+<div class="viewcode-block" id="subset_file"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.subset_file">[docs]</a><span class="k">def</span> <span class="nf">subset_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">out_file_name</span><span class="p">,</span> <span class="n">spike_ids</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read the spike data formatted from NEURON where each line is a timestamp</span>
+<span class="sd">    of a spike followed by a cell (or other spike generator) id that gave the</span>
+<span class="sd">    spike. Echo a new file in the same format, but only of those spike_ids</span>
+<span class="sd">    specified in the ``spike_ids`` list.</span>
+<span class="sd">    :param file_name: Input file to read.</span>
+<span class="sd">    :param out_file_name: Output file to write.</span>
+<span class="sd">    :param spike_ids: List of spike ids to write out.&quot;&quot;&quot;</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="c"># Open the file</span>
+    <span class="n">out_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file_name</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">a_line</span> <span class="ow">in</span> <span class="n">in_file</span><span class="p">:</span>
+        <span class="n">tosplit</span> <span class="o">=</span> <span class="n">a_line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tosplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c"># See if this idx is in the list</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_index</span><span class="p">(</span><span class="n">spike_ids</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">continue</span>
+        
+        <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">a_line</span><span class="p">)</span>
+    <span class="n">in_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">out_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+</div>
+<div class="viewcode-block" id="read_file"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.read_file">[docs]</a><span class="k">def</span> <span class="nf">read_file</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">spike_ids</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read the spike data formatted from NEURON where each line is a timestamp</span>
+<span class="sd">    of spike followed by a cell (or other spike generator) id that gave the</span>
+<span class="sd">    spike.</span>
+
+<span class="sd">    :param file_name: Name of the spike file to read.</span>
+<span class="sd">    :param spike_ids: If specified, a subset of ids to load. This should be a</span>
+<span class="sd">        sorted-ascending list.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: The data in a dict where the key is the cell id</span>
+<span class="sd">        and the list of spike times is the data associated with the cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">the_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="c"># Open the file</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">a_line</span> <span class="ow">in</span> <span class="n">the_file</span><span class="p">:</span>
+        <span class="n">tosplit</span> <span class="o">=</span> <span class="n">a_line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tosplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">spike_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># See if this idx is in the list</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_index</span><span class="p">(</span><span class="n">spike_ids</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="n">tval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tosplit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">spikes_idx</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">spikes_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tval</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">spikes_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">tval</span><span class="p">]</span>
+    <span class="n">the_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">data</span>
+    </div>
+<div class="viewcode-block" id="read_file_to_vector"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.read_file_to_vector">[docs]</a><span class="k">def</span> <span class="nf">read_file_to_vector</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">spike_ids</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read the spike data formatted from NEURON where each line is a timestamp</span>
+<span class="sd">    of spike followed by a cell (or other spike generator) id that gave the</span>
+<span class="sd">    spike.</span>
+
+<span class="sd">    :param file_name: Name of the spike file to read.</span>
+<span class="sd">    :param spike_ids: If specified, a subset of ids to load. This should be an</span>
+<span class="sd">        sorted-ascending list.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: The data in a vector of tuples of the format (time, gid).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">the_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="c"># Open the file</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">a_line</span> <span class="ow">in</span> <span class="n">the_file</span><span class="p">:</span>
+        <span class="n">tosplit</span> <span class="o">=</span> <span class="n">a_line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tosplit</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">spike_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># See if this idx is in the list</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_index</span><span class="p">(</span><span class="n">spike_ids</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="n">tval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tosplit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tval</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
+    <span class="n">the_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">data</span>
+</div>
+<div class="viewcode-block" id="netconvecs_to_dict"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.netconvecs_to_dict">[docs]</a><span class="k">def</span> <span class="nf">netconvecs_to_dict</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert data from NetCon.record(tvec, idvec) vectors into a dict</span>
+<span class="sd">    where the keys of the dict are the ids and the value is a list of</span>
+<span class="sd">    timestamps associated with that id.</span>
+<span class="sd">    </span>
+<span class="sd">    :param tvec: Timestamp vector.</span>
+<span class="sd">    :param idvec: Associated ids of each timestamp.</span>
+<span class="sd">    </span>
+<span class="sd">    .. NOTE: idvec and tvec must be the same length.</span>
+<span class="sd">    </span>
+<span class="sd">    Example::</span>
+
+<span class="sd">        # nclist is a list of NetCons</span>
+<span class="sd">        t_vec = nrn.Vector()</span>
+<span class="sd">        id_vec = nrn.Vector()</span>
+<span class="sd">        </span>
+<span class="sd">        for i in range(len(nclist)):</span>
+<span class="sd">            nclist[i].record(t_vec, id_vec, i)</span>
+
+<span class="sd">        simulate()</span>
+<span class="sd">        </span>
+<span class="sd">    :return: The data in a dict where the key is the cell id</span>
+<span class="sd">        and the list of spike times is the data associated with the cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span> <span class="ow">in</span> <span class="n">izip</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">spikes_idx</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">spikes_idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">spikes_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">data</span>
+</div>
+<div class="viewcode-block" id="netconvecs_to_listoflists"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.netconvecs_to_listoflists">[docs]</a><span class="k">def</span> <span class="nf">netconvecs_to_listoflists</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">,</span> <span class="n">minmax</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert data from NetCon.record(tvec, idvec) vectors into a dict</span>
+<span class="sd">    where the keys of the dict are the ids and the value is a list of</span>
+<span class="sd">    timestamps associated with that id.</span>
+<span class="sd">    </span>
+<span class="sd">    :param tvec: Timestamp vector.</span>
+<span class="sd">    :param idvec: Associated ids of each timestamp.</span>
+<span class="sd">    :param min: If specified as a tuple, then the full range of values</span>
+<span class="sd">            will between (min, max) will be inserted as empty lists</span>
+<span class="sd">            if they are not present in id_vec.</span>
+<span class="sd">    </span>
+<span class="sd">    .. NOTE: idvec and tvec must be the same length.</span>
+<span class="sd">    </span>
+<span class="sd">    Example::</span>
+
+<span class="sd">        # nclist is a list of NetCons</span>
+<span class="sd">        t_vec = nrn.Vector()</span>
+<span class="sd">        id_vec = nrn.Vector()</span>
+<span class="sd">        </span>
+<span class="sd">        for i in range(len(nclist)):</span>
+<span class="sd">            nclist[i].record(t_vec, id_vec, i)</span>
+
+<span class="sd">        simulate()</span>
+<span class="sd">        </span>
+<span class="sd">    :return: The data as a list of lists with each row being the spike</span>
+<span class="sd">        times.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">as_dict</span> <span class="o">=</span> <span class="n">netconvecs_to_dict</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">minmax</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">minmax</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">minmax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">as_dict</span><span class="p">:</span>
+                <span class="n">as_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            
+    <span class="k">return</span> <span class="n">dictspikes_to_listoflists</span><span class="p">(</span><span class="n">as_dict</span><span class="p">)</span>
+</div>
+<span class="k">def</span> <span class="nf">dictspikes_to_listoflists</span><span class="p">(</span><span class="n">dict_data</span><span class="p">):</span>
+    <span class="n">lol</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dict_data</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+        <span class="n">lol</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="c"># v should be a list.</span>
+    <span class="k">return</span> <span class="n">lol</span>
+
+<div class="viewcode-block" id="print_spikes"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.print_spikes">[docs]</a><span class="k">def</span> <span class="nf">print_spikes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print the spike times of cell ``idx`` within interval ``window``.</span>
+<span class="sd">    </span>
+<span class="sd">    :param data: This should be a 2D array or</span>
+<span class="sd">        a set or dict where the spikes from a given cell can be</span>
+<span class="sd">        accessed as data[idx]. The spikes also need to be sorted</span>
+<span class="sd">        if ``window`` is specified.</span>
+<span class="sd">        </span>
+<span class="sd">    :param idx: id(s) from ``data`` to extract. If blank, then this will </span>
+<span class="sd">        retrieve the spikes of ``0``. If an integer, it will return</span>
+<span class="sd">        the spikes of that index. If a list of integers, then it will</span>
+<span class="sd">        return those spikes in the list.</span>
+<span class="sd">        </span>
+<span class="sd">    :param window: A tuple, (lo, hi), specifying the window range of </span>
+<span class="sd">        values to return. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span> <span class="p">:</span>
+        <span class="n">spikes</span> <span class="o">=</span> <span class="n">get_spikes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spike</span> <span class="ow">in</span> <span class="n">spikes</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">spike</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span>
+</div>
+<div class="viewcode-block" id="get_spikes"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_spikes">[docs]</a><span class="k">def</span> <span class="nf">get_spikes</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the spikes from the cell with this idx within a time window.</span>
+<span class="sd">    </span>
+<span class="sd">    :param data: is the spike data. This should be a 2D array or</span>
+<span class="sd">        a set or dict where the spikes from a given cell can be</span>
+<span class="sd">        accessed as data[idx]. The spikes also need to be sorted</span>
+<span class="sd">        in time if window is specified.</span>
+<span class="sd">        </span>
+<span class="sd">    :param idx: id(s) from ``data`` to extract. If blank, then this will </span>
+<span class="sd">        retrieve the spikes of ``0``. If an integer, it will return</span>
+<span class="sd">        the spikes of that index. If a list of integers, then it will</span>
+<span class="sd">        return those spikes in the list.</span>
+<span class="sd">        </span>
+<span class="sd">    :param window: A tuple, (lo, hi), specifying the window range of </span>
+<span class="sd">        values to return.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: If idx is a scalar, then this will return the spikes</span>
+<span class="sd">        associated with one cell. If idx is a list of indices, then</span>
+<span class="sd">        a dict of lists will be returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Make an empty copy.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">:</span>
+            <span class="n">ret</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_spikes_sub</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_get_spikes_sub</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+</div>
+<span class="k">def</span> <span class="nf">_get_spikes_sub</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the spikes from the cell with this idx within window window.</span>
+<span class="sd">    </span>
+<span class="sd">    :param data: is the spike data. This should be a 2D array or</span>
+<span class="sd">        a set or dict where the spikes from a given cell can be</span>
+<span class="sd">        accessed as data[idx]. The spikes also need to be sorted</span>
+<span class="sd">        if window is specified.</span>
+<span class="sd">        </span>
+<span class="sd">    :param idx: is the id from data to extract.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: a tuple, (low, high), specifying the window range of </span>
+<span class="sd">        values to return.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A list of spike times or an empty list if no spikes are valid. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span> <span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">window</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">window</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">spikes</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">spikes</span><span class="p">[</span><span class="n">low</span><span class="p">:</span><span class="n">high</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[]</span> <span class="c"># Empty array</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span>
+
+<div class="viewcode-block" id="get_isi_vec"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_isi_vec">[docs]</a><span class="k">def</span> <span class="nf">get_isi_vec</span><span class="p">(</span><span class="n">spikes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an ordered list of spike times, return its interspike interval </span>
+<span class="sd">    vector.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train: 1D list or numpy array of spike times</span>
+<span class="sd">    </span>
+<span class="sd">    :return: A 1D vector of length len(spikes)-1 of the time differences in spikes.</span>
+<span class="sd">        </span>
+<span class="sd">    numpy.diff</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vec</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)):</span>
+        <span class="n">vec</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">spikes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">spikes</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">vec</span>
+</div>
+<div class="viewcode-block" id="get_mean_isi"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_mean_isi">[docs]</a><span class="k">def</span> <span class="nf">get_mean_isi</span><span class="p">(</span><span class="n">train</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the mean interspike interval of a given spike train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train: 1D list or numpy array of spike times</span>
+<span class="sd">    :return: Mean interspike interval.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">isi_vec</span> <span class="o">=</span> <span class="n">get_isi_vec</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">isi_vec</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="get_median_isi"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_median_isi">[docs]</a><span class="k">def</span> <span class="nf">get_median_isi</span><span class="p">(</span><span class="n">train</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the median interspike interval of a given spike train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train: 1D list or numpy array of spike times</span>
+<span class="sd">    :return: Median interspike interval.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">isi_vec</span> <span class="o">=</span> <span class="n">get_isi_vec</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">isi_vec</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="permute_vec"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.permute_vec">[docs]</a><span class="k">def</span> <span class="nf">permute_vec</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Permute a 1D array.</span>
+<span class="sd">    </span>
+<span class="sd">    :param vec: The vector to permute.</span>
+<span class="sd">    :param seed: The seed for the random number generator. Default is None, which</span>
+<span class="sd">        uses the system time.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A permuted copy of vec.&quot;&quot;&quot;</span>
+    <span class="n">rangen</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">mtrand</span><span class="o">.</span><span class="n">RandomState</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">rangen</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="n">copy</span> <span class="o">=</span> <span class="n">vec</span><span class="p">[:]</span>
+    <span class="n">rangen</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">copy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">copy</span>
+    </div>
+<div class="viewcode-block" id="get_spike_bounds"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_spike_bounds">[docs]</a><span class="k">def</span> <span class="nf">get_spike_bounds</span><span class="p">(</span><span class="n">spikes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    From a 2D array of spike data, retrieve the minimum and maximum spike </span>
+<span class="sd">    times.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spikes_min_x</span> <span class="o">=</span> <span class="n">spikes_max_x</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;spikes is not a list.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span><span class="c">#not spikes: # Empty lists evaluate to False</span>
+        <span class="k">raise</span> <span class="n">listutil</span><span class="o">.</span><span class="n">ListEmptyError</span><span class="p">(</span><span class="s">&#39;spikes&#39;</span><span class="p">)</span>
+    <span class="n">spikes_copy</span> <span class="o">=</span> <span class="n">listutil</span><span class="o">.</span><span class="n">flatten_from_2d</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">spikes_copy</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">listutil</span><span class="o">.</span><span class="n">ListEmptyError</span><span class="p">(</span><span class="s">&#39;spikes_copy&#39;</span><span class="p">)</span>
+    <span class="n">spikes_min_x</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">spikes_copy</span><span class="p">)</span>
+    <span class="n">spikes_max_x</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">spikes_copy</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">spikes_min_x</span><span class="p">,</span> <span class="n">spikes_max_x</span>
+        </div>
+<div class="viewcode-block" id="get_flattened"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_flattened">[docs]</a><span class="k">def</span> <span class="nf">get_flattened</span><span class="p">(</span><span class="n">spikes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Project the spike times from a 2d spike map to an ordered list in one</span>
+<span class="sd">    dimension. This is similar to numpy&#39;s flatten() method, but numpy requires</span>
+<span class="sd">    a rectangular matrix. In our case, each row of the spikes array can have</span>
+<span class="sd">    a variable number of spike times, and even be empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flattened</span> <span class="o">=</span> <span class="n">listutil</span><span class="o">.</span><span class="n">flatten_from_2d</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">flattened</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="get_permuted_train"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_permuted_train">[docs]</a><span class="k">def</span> <span class="nf">get_permuted_train</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">num_copies</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">smear</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    With a given spike train, capture its interspike intervals and permute</span>
+<span class="sd">    them into a new spike train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train: is the spike train to permute. It is unaffected.</span>
+<span class="sd">    </span>
+<span class="sd">    :param num_copies: is the number of times the spike train is permutted. </span>
+<span class="sd">        The default value of 1 returns a permutted vector the same length as</span>
+<span class="sd">        the original train. A value of 2 would return a vector twice the</span>
+<span class="sd">        length.</span>
+<span class="sd">    </span>
+<span class="sd">    :param smear: When True, this adds a random time in the range </span>
+<span class="sd">        [-mean_isi/2., mean_isi/2] to appending trains. Default is False.</span>
+<span class="sd">        </span>
+<span class="sd">    :param seed: is the seed for the random generator. Default is None, which</span>
+<span class="sd">        then uses the system time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">isi</span> <span class="o">=</span> <span class="n">get_isi_vec</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+    <span class="n">mean_isi</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">isi</span><span class="p">)</span>
+    <span class="n">rval</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">vec</span> <span class="o">=</span> <span class="n">isi</span><span class="p">[:]</span>
+    <span class="n">rangen</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">mtrand</span><span class="o">.</span><span class="n">RandomState</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">rangen</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">num_copies</span><span class="p">):</span>
+        <span class="n">rangen</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+        <span class="n">cumsum</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">smear</span><span class="p">:</span>
+            <span class="n">randnum</span> <span class="o">=</span> <span class="n">rangen</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">mean_isi</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">mean_isi</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span>
+            <span class="n">cumsum</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cumsum</span><span class="p">,</span> <span class="n">randnum</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cumsum</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cumsum</span><span class="p">,</span> <span class="n">rval</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="c"># rval probably does not yet exist</span>
+            <span class="k">pass</span>
+    
+        <span class="n">rval</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">rval</span><span class="p">,</span> <span class="n">cumsum</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">rval</span>
+</div>
+<div class="viewcode-block" id="get_histogram"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_histogram">[docs]</a><span class="k">def</span> <span class="nf">get_histogram</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Get the histogram of one or more spike trains. This is a means of quantizing 1D spikes</span>
+<span class="sd">    as well.</span>
+<span class="sd">    </span>
+<span class="sd">    :param spikes: A 1D python list, or 1D or 2D numpy array of spike times.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: A tuple, (lo, hi), specifying a subset in time if the complete</span>
+<span class="sd">            spikes are not used. The default value of ``None`` uses the complete spikes.</span>
+<span class="sd">            </span>
+<span class="sd">    :param dt: Is the time bin to discretize by. Default is 1.</span>
+<span class="sd">    </span>
+<span class="sd">    :param bins: A numpy array specifying the histogram edges. Default is ``None``. If</span>
+<span class="sd">            bins is specified, then it ignores window and dt.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: A tuple of the form (discrete, bin_edges).</span>
+<span class="sd">    </span>
+<span class="sd">    .. seealso:: http://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">spikes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;spikes is None and should be a python list, list of lists, &#39;</span>
+        <span class="n">errstr</span> <span class="o">+=</span> <span class="s">&#39;or numpy array.&#39;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span> <span class="ow">and</span> \
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;spikes must be a python list or numpy array.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">spikes</span><span class="p">:</span> <span class="c"># Empty lists evaluate to False</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Spikes is an empty array.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+<span class="c">#    shape = numpy.shape(spikes)</span>
+<span class="c">#    if len(shape) == 0:</span>
+<span class="c">#        if isinstance(spikes, list) is False and \</span>
+<span class="c">#                isinstance(spikes, numpy.ndarray) is False:</span>
+<span class="c">#            raise TypeError(&#39;spikes must be a python list or numpy array.&#39;)</span>
+<span class="c">#        else:</span>
+<span class="c">#            raise ValueError(&#39;spikes has no dimension&#39;)</span>
+<span class="c">#    if len(shape) &gt; 1:</span>
+        <span class="n">spks</span> <span class="o">=</span> <span class="n">get_flattened</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spks</span> <span class="o">=</span> <span class="n">spikes</span>
+        
+    <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="p">(</span><span class="n">spks</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        
+    <span class="k">if</span> <span class="n">bins</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">spks</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="filter"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.filter">[docs]</a><span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="p">[</span><span class="mf">1.</span><span class="p">],</span> <span class="n">origin</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convolve a 1D spike train with a kernel and return the resulting vector. This is</span>
+<span class="sd">    useful for blurring or otherwise smearing spike times with a particular</span>
+<span class="sd">    function, like a gaussian, a linear decay.</span>
+<span class="sd">    </span>
+<span class="sd">    :param spikes: A 1D python list or numpy array of spike times.</span>
+<span class="sd">    </span>
+<span class="sd">    :param kernel: A 1D python list or numpy array of filter values. Care might need</span>
+<span class="sd">        to be taken to ensure that this sums to 1 to keep the magnitude the same.</span>
+<span class="sd">        By default this is [1.0], which means that the output is a copy of the input.</span>
+<span class="sd">    .. seealso:: :mod:`neuronpy.math.kernel` </span>
+<span class="sd"> </span>
+<span class="sd">    :param origin: can be a string or an integer.:</span>
+<span class="sd">    - *integer*</span>
+<span class="sd">      is an integer to specify the offset of the kernel</span>
+<span class="sd">      applied in the convolution. This needs to be between 0 and</span>
+<span class="sd">      the length of the kernel - 1. By default, this is 0 and therefore</span>
+<span class="sd">      centers the kernel. A negative value shifts the kernel to the </span>
+<span class="sd">      right and a positive value shifts the kernel to the left.</span>
+<span class="sd">    - *string*</span>
+<span class="sd">      Can be &#39;left&#39;, &#39;center&#39;, or &#39;right&#39;</span>
+<span class="sd">   </span>
+<span class="sd">    :param window: A tuple, (lo, hi), specifying a subset in time if the complete</span>
+<span class="sd">            spikes are not used. The default value of ``None`` uses the complete spikes.</span>
+<span class="sd">            </span>
+<span class="sd">    :param dt: Is the time bin to discretize by. Default is 1.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A 1D vector of the filtered spikes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="c">#    vartest.is1Dvector(spikes, &#39;spikes&#39;)</span>
+    <span class="n">org</span> <span class="o">=</span> <span class="n">validate_kernel_and_origin</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">discrete</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_histogram</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">convolve1d</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">asfarray</span><span class="p">(</span><span class="n">discrete</span><span class="p">),</span> <span class="n">weights</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">org</span><span class="p">,</span> \
+            <span class="n">mode</span><span class="o">=</span><span class="s">&#39;constant&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="validate_kernel_and_origin"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.validate_kernel_and_origin">[docs]</a><span class="k">def</span> <span class="nf">validate_kernel_and_origin</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Confirm that the origin for this kernel is valid. Raise an exception if not.</span>
+<span class="sd">    </span>
+<span class="sd">    :param origin: can be a string or an integer.:</span>
+<span class="sd">    - *integer*</span>
+<span class="sd">      is an integer to specify the offset of the kernel</span>
+<span class="sd">      applied in the convolution. This needs to be between 0 and</span>
+<span class="sd">      the length of the kernel - 1. By default, this is 0 and therefore</span>
+<span class="sd">      centers the kernel. A negative value shifts the kernel to the </span>
+<span class="sd">      right and a positive value shifts the kernel to the left.</span>
+<span class="sd">    - *string*</span>
+<span class="sd">      Can be &#39;left&#39;, &#39;center&#39;, or &#39;right&#39;</span>
+<span class="sd">      </span>
+<span class="sd">    :return: a valid integer if a string was used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">is1Dvector</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="s">&#39;kernel&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;center&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">]</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">inlist</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">valid</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+        <span class="n">lenk</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span><span class="o">==</span><span class="s">&#39;left&#39;</span><span class="p">:</span>
+            <span class="n">_origin</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">origin</span><span class="o">==</span><span class="s">&#39;right&#39;</span><span class="p">:</span>
+            <span class="n">_origin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_origin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_origin</span> <span class="o">=</span> <span class="n">origin</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">isint</span><span class="p">(</span><span class="n">_origin</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+    <span class="n">lenk</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+    <span class="nb">min</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+    <span class="nb">max</span> <span class="o">=</span> <span class="o">-</span><span class="nb">min</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">inrange</span><span class="p">(</span><span class="n">_origin</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_origin</span>
+    </div>
+<div class="viewcode-block" id="filter_correlogram"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.filter_correlogram">[docs]</a><span class="k">def</span> <span class="nf">filter_correlogram</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="n">train_b</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span>
+                       <span class="n">shift</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform a cross-correlation between two spike trains after filtering them</span>
+<span class="sd">    to be continuous time domain vectors.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_a: List of spike times in one train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_b: List of spike times in another train. Default is ``None``, which</span>
+<span class="sd">        means that autocorrelation is performed on ``train_a``.</span>
+<span class="sd">    </span>
+<span class="sd">    :param kernel: Is the 1D filter that is applied to the two trains before they </span>
+<span class="sd">        are correlated. By default, this is ``None``, which has no filtering </span>
+<span class="sd">        effect.</span>
+<span class="sd">        </span>
+<span class="sd">    :param origin: Offset for the filter. .. seealso:: :func:`filter`.</span>
+
+<span class="sd">    :param dt: Timestep interval for spike trains to be filtered to.</span>
+<span class="sd">    </span>
+<span class="sd">    :param shift: Maximum time shift of the correlogram. By default, this is</span>
+<span class="sd">        ``None``, which means that the trains are convolved using numpy&#39;s </span>
+<span class="sd">        correlation function,</span>
+<span class="sd">        http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html.</span>
+<span class="sd">        If specified, then the convolution is performed across the sliding window</span>
+<span class="sd">        from ``[-shift, shift]``.</span>
+<span class="sd">        </span>
+<span class="sd">    :param window: Evaluate spikes within a time window. By default, this is </span>
+<span class="sd">        ``None``, which means that both full trains are evaluated. In this case,</span>
+<span class="sd">        the first and last spike times of the trains are padded with the</span>
+<span class="sd">        kernel used. Otherwise, this is a 2-element list.</span>
+<span class="sd">            </span>
+<span class="sd">    :param mode: Mode for numpy&#39;s correlation function,</span>
+<span class="sd">        http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html.</span>
+<span class="sd">        If *shift* is specified, this parameter is ignored.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: Tuple *(raw_val, norm_factor, expected_val)* where</span>
+<span class="sd">        *raw_val* is a scalar if ``mode=&#39;valid&#39;`` or a vector if</span>
+<span class="sd">        *mode* is a different value.</span>
+<span class="sd">        *norm_factor* the value (scalar) of train_a correlated with </span>
+<span class="sd">        itself.</span>
+<span class="sd">        *expected_vaL* the value (scalar) of the mean of each correlated with </span>
+<span class="sd">        itself.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">is1Dvector</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="s">&#39;train_a&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">train_a</span><span class="p">:</span> <span class="c"># Empty lists evaluate to False</span>
+        <span class="k">raise</span> <span class="n">listutil</span><span class="o">.</span><span class="n">ListEmptyError</span><span class="p">(</span><span class="s">&#39;train_a&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">is1Dvector</span><span class="p">(</span><span class="n">train_b</span><span class="p">,</span> <span class="s">&#39;train_b&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">train_b</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">listutil</span><span class="o">.</span><span class="n">ListEmptyError</span><span class="p">(</span><span class="s">&#39;train_b&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">kernel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">mathkernel</span><span class="o">.</span><span class="n">rectangle_window</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">train_b</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="n">train_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">train_a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">train_a</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">train_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]]),</span> \
+                    <span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">train_a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">train_b</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])]</span>
+        <span class="c"># Pad from the kernel</span>
+        <span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">dt</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span><span class="o">*</span><span class="n">dt</span><span class="p">)))])</span>
+        <span class="n">window</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*=</span> <span class="mi">1</span><span class="o">+</span><span class="n">dt</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span><span class="o">*</span><span class="n">dt</span><span class="p">)))</span> <span class="c"># Pad from the kernel</span>
+        
+    <span class="n">fa</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">norm_factor</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">fa</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">train_b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">fb</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">train_b</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+<span class="c">#        norm_factor = numpy.max([norm_factor, </span>
+<span class="c">#                                 numpy.correlate(fb, fb, mode=&#39;valid&#39;)])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fb</span> <span class="o">=</span> <span class="n">fa</span>
+
+    <span class="k">if</span> <span class="n">shift</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">mean_a</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span>
+        <span class="n">mean_b</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fb</span><span class="p">)</span>
+        <span class="n">len_ab</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">),</span> \
+            <span class="nb">float</span><span class="p">(</span><span class="n">norm_factor</span><span class="p">),</span> <span class="n">len_ab</span><span class="o">*</span><span class="n">mean_a</span><span class="o">*</span><span class="n">mean_b</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lenvec</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">shift</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">summididx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">lenvec</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span>
+        <span class="n">sum_vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lenvec</span><span class="p">)</span>
+        <span class="n">sum_vec</span><span class="p">[</span><span class="n">summididx</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="n">shift</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">fa2</span> <span class="o">=</span> <span class="n">fa</span><span class="p">[:</span><span class="o">-</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">fb2</span> <span class="o">=</span> <span class="n">fb</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
+
+            <span class="n">sum_vec</span><span class="p">[</span><span class="o">-</span><span class="n">idx</span><span class="o">+</span><span class="n">summididx</span><span class="p">]</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span>
+                        <span class="n">fa2</span><span class="p">,</span> <span class="n">fb2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span> <span class="c"># neg</span>
+            <span class="n">fa2</span> <span class="o">=</span> <span class="n">fa</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
+            <span class="n">fb2</span> <span class="o">=</span> <span class="n">fb</span><span class="p">[:</span><span class="o">-</span><span class="n">idx</span><span class="p">]</span>
+
+            <span class="n">sum_vec</span><span class="p">[</span><span class="n">idx</span><span class="o">+</span><span class="n">summididx</span><span class="p">]</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">correlate</span><span class="p">(</span>
+                        <span class="n">fa2</span><span class="p">,</span> <span class="n">fb2</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span> <span class="c"># neg</span>
+
+        <span class="n">mean_a</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span>
+        <span class="n">mean_b</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fb</span><span class="p">)</span>
+        <span class="n">len_ab</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">sum_vec</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">norm_factor</span><span class="p">),</span> <span class="n">len_ab</span><span class="o">*</span><span class="n">mean_a</span><span class="o">*</span><span class="n">mean_b</span>
+                     </div>
+<div class="viewcode-block" id="get_sync_traits"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_sync_traits">[docs]</a><span class="k">def</span> <span class="nf">get_sync_traits</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="n">train_b</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For two spike trains, get their masks where they have spikes that occur</span>
+<span class="sd">    within ``window`` time of each other and the ratio of correlated vs. </span>
+<span class="sd">    total spikes in both trains.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_a: List of spike times in one train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_b: List of spike times in another train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to search for correlated inputs.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: mask_a, mask_b, ratio -- the correlated masks and the ratio of</span>
+<span class="sd">        correlated vs. total spikes in both trains.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span> <span class="o">=</span> <span class="n">get_sync_masks</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="n">train_b</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+    <span class="n">len_a</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_a</span><span class="p">)</span>
+    <span class="n">len_b</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_b</span><span class="p">)</span>
+    <span class="n">num_coincident</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask_a</span><span class="p">)</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_coincident</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">len_a</span> <span class="o">+</span> <span class="n">len_b</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">num_coincident</span><span class="p">,</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span><span class="p">,</span> <span class="n">ratio</span>
+        </div>
+<div class="viewcode-block" id="get_phase_correlation"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_phase_correlation">[docs]</a><span class="k">def</span> <span class="nf">get_phase_correlation</span><span class="p">(</span><span class="n">reference_train</span><span class="p">,</span> <span class="n">sliding_train</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> \
+            <span class="n">sliding_intervals</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">isi</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Get the number of corresponding spikes within some time window between</span>
+<span class="sd">    two trains across a number of time-shifted trials.</span>
+<span class="sd">    </span>
+<span class="sd">    The number of correlated spikes between two trains that are within some </span>
+<span class="sd">    time constant of each other is simply the fraction:</span>
+<span class="sd">        </span>
+<span class="sd">    .. math::    </span>
+<span class="sd">        </span>
+<span class="sd">        \phi_{0} = \frac{\small{\textrm{</span>
+<span class="sd">        number of correlated spikes within a time window}}}{\small{\textrm{</span>
+<span class="sd">        total number of spikes in both trains.}}}</span>
+<span class="sd">    </span>
+<span class="sd">    where :math:`\phi_{0}` is the fraction with no delay between the trains.</span>
+<span class="sd">    To determine the correlation at some arbitrary delay, :math:`\tau`, we</span>
+<span class="sd">    can re-write the equation as:</span>
+<span class="sd">        </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        </span>
+<span class="sd">        \phi_{\tau} = \frac{\small{\textrm{</span>
+<span class="sd">        number of correlated spikes within a time window}}}{\small{\textrm{</span>
+<span class="sd">        total number of spikes in both trains.}}}</span>
+<span class="sd">       </span>
+<span class="sd">    where :math:`\tau` is the time one train is shifted relative to the </span>
+<span class="sd">    reference train.</span>
+<span class="sd">    </span>
+<span class="sd">    When the trains are spiking fairly regularly and oscillating around a</span>
+<span class="sd">    particular frequency, it is useful to vary :math:`\tau` over the interval</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        </span>
+<span class="sd">        \tau=\left[\frac{-median\_isi}{2},  \frac{median\_isi}{2}\right]</span>
+<span class="sd">        </span>
+<span class="sd">    where ``median_isi`` is the median interspike interval of the reference </span>
+<span class="sd">    train. This permits a measure of the relative phase of one spike train </span>
+<span class="sd">    over the other. As :math:`\tau` varies over this interval, the individual </span>
+<span class="sd">    values of :math:`\phi_{\tau}` can be stored in a vector, :math:`\Phi`.</span>
+<span class="sd">        </span>
+<span class="sd">    :param reference_train: Spike times of the reference train. It is </span>
+<span class="sd">        assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param sliding_train: Spike times of the train that shifts in time.</span>
+<span class="sd">        It is assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to say that two spikes are synchronized.</span>
+<span class="sd">        This has a default value of 5.</span>
+<span class="sd">        </span>
+<span class="sd">    :param sliding_intervals: Number of iterations to perform, sliding</span>
+<span class="sd">        ``sliding_train`` from [-1/2, 1/2] the median of ``reference_train``&#39;s</span>
+<span class="sd">        interspike interval. This should be an odd number to ensure a </span>
+<span class="sd">        precise sample about 0 delay.</span>
+<span class="sd">        </span>
+<span class="sd">    :param isi: If specified, this value will override the median interspike</span>
+<span class="sd">        interval of the reference train.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: The following values:</span>
+<span class="sd">            </span>
+<span class="sd">            * ``relative_sync``, which is the value of the number of </span>
+<span class="sd">                correlated spikes with no delay offset between the spike </span>
+<span class="sd">                train, divided by the mean of the :math:`\Phi`.</span>
+<span class="sd">            * ``phi_0``, which is the number of correlated spikes within the </span>
+<span class="sd">                time window divided by the total number of spikes in both </span>
+<span class="sd">                trains.</span>
+<span class="sd">            * ``mu``, the mean of the :math:`\Phi` vector.</span>
+<span class="sd">            * ``phi_vec``, the :math:`\Phi` vector.</span>
+<span class="sd">            </span>
+<span class="sd">    .. seealso:: :func:`coincidence_factor_phase` </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_coincident</span><span class="p">,</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span><span class="p">,</span> <span class="n">phi_0</span> <span class="o">=</span> <span class="n">get_sync_traits</span><span class="p">(</span> \
+            <span class="n">reference_train</span><span class="p">,</span> <span class="n">sliding_train</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+            
+    <span class="k">if</span> <span class="n">isi</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">isi</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">isi</span> <span class="o">=</span> <span class="n">get_mean_isi</span><span class="p">(</span><span class="n">reference_train</span><span class="p">)</span>
+        
+    <span class="n">phi_vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sliding_intervals</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">isi</span><span class="o">/</span><span class="n">sliding_intervals</span><span class="o">/</span><span class="mf">2.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">isi</span><span class="o">/</span><span class="mf">2.</span><span class="o">+</span><span class="n">shift</span><span class="p">,</span> <span class="n">isi</span><span class="o">/</span><span class="mf">2.</span><span class="o">-</span><span class="n">shift</span><span class="p">,</span> <span class="n">sliding_intervals</span><span class="p">):</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">sliding_train</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">num_coincident</span><span class="p">,</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">get_sync_traits</span><span class="p">(</span> \
+                <span class="n">reference_train</span><span class="p">,</span> <span class="n">vec</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+        <span class="n">phi_vec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ratio</span>
+        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">phi_vec</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">phi_0</span><span class="o">/</span><span class="n">mu</span><span class="p">,</span> <span class="n">phi_0</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">phi_vec</span>
+    </div>
+<div class="viewcode-block" id="coincidence_factor"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.coincidence_factor">[docs]</a><span class="k">def</span> <span class="nf">coincidence_factor</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">isi</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    The coincidence factor :math:`\Gamma` between two spike trains is defined as</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        </span>
+<span class="sd">       \Gamma = \frac{N_\mathrm{coinc}- E \left( N_\mathrm{coinc} \right)}</span>
+<span class="sd">       {\frac{1}{2}\left(N_\mathrm{ref}+N_\mathrm{comp}\right) - </span>
+<span class="sd">       E \left( N_\mathrm{coinc} \right)}</span>
+
+<span class="sd">    where :math:`N_{\mathrm{ref}}` are the number of spikes in the reference train,</span>
+<span class="sd">    :math:`N_{\mathrm{comp}}` is the number of spikes in the comparing train, </span>
+<span class="sd">    :math:`N_{\mathrm{coinc}}` is the number of coincident spikes within a time window </span>
+<span class="sd">    :math:`\Delta`, :math:`E \left( N_\mathrm{coinc} \right) = 2 v \Delta N_{\mathrm{ref}}` </span>
+<span class="sd">    is the expected number of coincident spikes that would be given by chance </span>
+<span class="sd">    if the spikes in the comparing train were generated by a homogeneous </span>
+<span class="sd">    Poisson process with its rate :math:`v`. This correlation measure has the range </span>
+<span class="sd">    [-1, 1] where 1 is perfectly correlated, 0 is not correlated, and -1 is </span>
+<span class="sd">    perfectly anti-correlated.</span>
+<span class="sd">    </span>
+<span class="sd">    :param ref: Spike times of the reference train. It is </span>
+<span class="sd">        assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param comp: Spike times of the train that shifts in time.</span>
+<span class="sd">        It is assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to say that two spikes are synchronized.</span>
+<span class="sd">        This has a default value of 5.</span>
+<span class="sd">        </span>
+<span class="sd">    :param isi: If supplied, this is the isi of the comparing train. Otherwise,</span>
+<span class="sd">        the rate of the train is computed by taking the last spike minus the</span>
+<span class="sd">        first spike and dividing by the number of spikes in between.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: Coincidence factor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_coincident</span><span class="p">,</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">get_sync_traits</span><span class="p">(</span> \
+            <span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+    <span class="n">len_ref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+    <span class="n">len_comp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+    <span class="n">total_spikes</span> <span class="o">=</span> <span class="n">len_ref</span> <span class="o">+</span> <span class="n">len_comp</span>
+    <span class="k">if</span> <span class="n">isi</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">len_comp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">comp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">comp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">isi</span>
+    <span class="n">expected_coincidences</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">v</span> <span class="o">*</span> <span class="n">window</span> <span class="o">*</span> <span class="n">len_ref</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">num_coincident</span> <span class="o">-</span> <span class="n">expected_coincidences</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="o">/</span> \
+            <span class="p">(</span><span class="n">total_spikes</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">expected_coincidences</span><span class="p">))</span>
+            </div>
+<div class="viewcode-block" id="coincidence_factor_phase"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.coincidence_factor_phase">[docs]</a><span class="k">def</span> <span class="nf">coincidence_factor_phase</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> \
+            <span class="n">num_intervals</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">isi</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param ref: Spike times of the reference train. It is </span>
+<span class="sd">        assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param comp: Spike times of the comparing train that shifts in time.</span>
+<span class="sd">        It is assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to say that two spikes are synchronized.</span>
+<span class="sd">        This has a default value of 5.</span>
+<span class="sd">        </span>
+<span class="sd">    :param num_intervals: Number of iterations to perform, sliding</span>
+<span class="sd">        ``comp`` from [-1/2, 1/2] the median of ``ref``&#39;s</span>
+<span class="sd">        interspike interval. This should be an odd number to ensure a </span>
+<span class="sd">        precise sample about 0 delay.</span>
+<span class="sd">    </span>
+<span class="sd">    :param isi: If supplied, this is the isi of the comparing train. Otherwise,</span>
+<span class="sd">        the rate of the train is computed by taking the last spike minus the</span>
+<span class="sd">        first spike and dividing by the number of spikes in between.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A vector of length ``num_intervals`` that corresponds to </span>
+<span class="sd">        coincidence factor values from a shift of -isi/2 to isi/2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="n">phi_vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_intervals</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">isi</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">isi</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">isi</span> <span class="o">=</span> <span class="n">get_mean_isi</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">isi</span><span class="o">/</span><span class="n">num_intervals</span><span class="o">/</span><span class="mf">2.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">isi</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">+</span><span class="n">shift</span><span class="p">,</span> <span class="p">(</span><span class="n">isi</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span><span class="o">-</span><span class="n">shift</span><span class="p">,</span> <span class="n">num_intervals</span><span class="p">):</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">phi_vec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">coincidence_factor</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">vec</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">isi</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+    <span class="k">return</span> <span class="n">phi_vec</span>
+</div>
+<div class="viewcode-block" id="coincident_spikes"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.coincident_spikes">[docs]</a><span class="k">def</span> <span class="nf">coincident_spikes</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">compfreq</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the fraction of coincident spikes between two trains. Coincidence is</span>
+<span class="sd">    defined as a spike co-occurring within some time window.</span>
+<span class="sd">    </span>
+<span class="sd">    :param ref: Spike times of the reference train. It is </span>
+<span class="sd">        assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param comp: Spike times of the comparing train that shifts in time.</span>
+<span class="sd">        It is assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to say that two spikes are coincident.</span>
+<span class="sd">        This has a default value of 5 ms.</span>
+<span class="sd">    </span>
+<span class="sd">    :param normalize: If ``True``, values are normalized by the rate expected by</span>
+<span class="sd">        chance, which is defined as ``2 * frequency(comp) * window * len(ref)``.</span>
+<span class="sd">        Also, a tuple is returned as </span>
+<span class="sd">        (normalized_coincidences, coincidences, expected_coincidences, total_spikes)</span>
+<span class="sd">        where total_spikes is the length of both trains.</span>
+
+<span class="sd">    :param compfreq: Frequency in Hz of comparing train. If None, the mean frequency</span>
+<span class="sd">        of the comparing train is calcluated and used. This is only used when </span>
+<span class="sd">        *normalize* is ``True``.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A vector of length ``1 + 2*timewindow/dt``. If normalize is ``True``,</span>
+<span class="sd">        return a tuple as </span>
+<span class="sd">        (normalized_coincidences, coincidences, expected_coincidences, total_spikes).</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="n">coincidences</span><span class="p">,</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">get_sync_traits</span><span class="p">(</span> \
+            <span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normalize</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">coincidences</span>
+        
+    <span class="n">len_ref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+    <span class="n">len_comp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+    <span class="n">total_spikes</span> <span class="o">=</span> <span class="n">len_ref</span> <span class="o">+</span> <span class="n">len_comp</span>
+    <span class="k">if</span> <span class="n">compfreq</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">compfreq</span> <span class="o">=</span> <span class="p">(</span><span class="n">len_comp</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">comp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">comp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">expected_coincidences</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">compfreq</span> <span class="o">*</span> <span class="n">window</span> <span class="o">*</span> <span class="n">len_ref</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">coincidences</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">expected_coincidences</span><span class="p">),</span> <span class="n">coincidences</span><span class="p">,</span> \
+            <span class="n">expected_coincidences</span><span class="p">,</span> <span class="n">total_spikes</span>
+</div>
+<div class="viewcode-block" id="coincident_spikes_correlogram"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.coincident_spikes_correlogram">[docs]</a><span class="k">def</span> <span class="nf">coincident_spikes_correlogram</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">timewindow</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> \
+        <span class="n">normalize</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the correlogram of coincident spikes between two trains. Coincidence is</span>
+<span class="sd">    defined as a spike co-occurring within some time window. The number of </span>
+<span class="sd">    coincidences is returned as a vector of len(1 + (2*timewindow)). This means that</span>
+<span class="sd">    the middle index is the value at lag zero ms.</span>
+<span class="sd">    </span>
+<span class="sd">    :param ref: Spike times of the reference train. It is </span>
+<span class="sd">        assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param comp: Spike times of the comparing train that shifts in time.</span>
+<span class="sd">        It is assumed that the spike times are ordered sequentially.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window to say that two spikes are synchronized.</span>
+<span class="sd">        This has a default value of 5.</span>
+<span class="sd">        </span>
+<span class="sd">    :param dt: The binwidth.</span>
+<span class="sd">    </span>
+<span class="sd">    :param timewindow: Correlogram range between [-timewindow, timewindow].</span>
+<span class="sd">        </span>
+<span class="sd">    :param normalize: If True, values are normalized by the rate expected by</span>
+<span class="sd">        chance at each lag, where chance is defined as </span>
+<span class="sd">        ``2 * frequency(comp) * window * len(ref)``.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: A vector of length ``1 + 2*timewindow/dt``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="n">phi_vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">timewindow</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">dt</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">phi_vec</span><span class="p">)):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="o">-</span><span class="n">timewindow</span> <span class="o">+</span> <span class="p">(</span><span class="n">idx</span> <span class="o">*</span> <span class="n">dt</span><span class="p">)</span>
+        <span class="n">vec</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">coincident_spikes</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">vec</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">phi_vec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">phi_vec</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+            
+    <span class="k">return</span> <span class="n">phi_vec</span>
+        </div>
+<div class="viewcode-block" id="get_frequency"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_frequency">[docs]</a><span class="k">def</span> <span class="nf">get_frequency</span><span class="p">(</span><span class="n">train</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the mean frequency of a spike train. Assumes time is in ms.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>            
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">last</span><span class="o">-</span><span class="n">first</span><span class="p">)</span><span class="o">*</span><span class="mf">1000.</span>
+    <span class="k">except</span><span class="p">:</span> <span class="c"># On any error, just return 0</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    </div>
+<div class="viewcode-block" id="get_sync_masks"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.get_sync_masks">[docs]</a><span class="k">def</span> <span class="nf">get_sync_masks</span><span class="p">(</span><span class="n">train_a</span><span class="p">,</span> <span class="n">train_b</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For two spike trains, return the mask of those spikes that</span>
+<span class="sd">    are within some time window of co-occurrence in the other train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_a: A list of spike times.</span>
+<span class="sd">    </span>
+<span class="sd">    :param train_b: Another list of spike times.</span>
+<span class="sd">    </span>
+<span class="sd">    :param window: Time window +/- about a given spike in one train to look</span>
+<span class="sd">        for a co-occuring spike in the other train.</span>
+<span class="sd">        </span>
+<span class="sd">    :return: Two vectors of ``len(train_a)`` and ``len(train_b)`` where a</span>
+<span class="sd">        zero indicates that a spike does not co-occur in the other train, and</span>
+<span class="sd">        1 indicates that a spike co-occurs in the other train within </span>
+<span class="sd">        ``window`` time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">idx_a</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">idx_b</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="n">mask_a</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">train_a</span><span class="p">)</span>
+    <span class="n">mask_b</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">train_b</span><span class="p">)</span>
+    
+    <span class="n">len_a</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_a</span><span class="p">)</span>
+    <span class="n">len_b</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_b</span><span class="p">)</span>
+    
+    <span class="k">while</span> <span class="n">idx_a</span> <span class="o">&lt;</span> <span class="n">len_a</span> <span class="ow">and</span> <span class="n">idx_b</span> <span class="o">&lt;</span> <span class="n">len_b</span><span class="p">:</span>
+        <span class="n">val_a</span> <span class="o">=</span> <span class="n">train_a</span><span class="p">[</span><span class="n">idx_a</span><span class="p">]</span>
+        <span class="n">val_b</span> <span class="o">=</span> <span class="n">train_b</span><span class="p">[</span><span class="n">idx_b</span><span class="p">]</span>
+
+        <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">val_a</span> <span class="o">-</span> <span class="n">val_b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;=</span> <span class="n">window</span><span class="p">:</span>
+            <span class="n">mask_a</span><span class="p">[</span><span class="n">idx_a</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">mask_b</span><span class="p">[</span><span class="n">idx_b</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        
+        <span class="k">if</span> <span class="n">val_a</span> <span class="o">==</span> <span class="n">val_b</span><span class="p">:</span>
+            <span class="n">idx_a</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">idx_b</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val_a</span> <span class="o">&lt;</span> <span class="n">val_b</span><span class="p">:</span>
+                <span class="n">idx_a</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">idx_b</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="k">return</span> <span class="n">mask_a</span><span class="p">,</span> <span class="n">mask_b</span>
+        </div>
+<div class="viewcode-block" id="closest_timing"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.closest_timing">[docs]</a><span class="k">def</span> <span class="nf">closest_timing</span><span class="p">(</span><span class="n">reference_train</span><span class="p">,</span> <span class="n">comparing_train</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each spike in the reference train, determine the closest spike time</span>
+<span class="sd">    in the other train at least within some window.</span>
+<span class="sd">    </span>
+<span class="sd">    :param reference_train: List of spike times of the reference train.</span>
+<span class="sd">    :param comparing_train: List of spike times in the comparing train.</span>
+<span class="sd">    :param window: Time window in ms to search.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: A dict where the keys are indices of the reference train and the</span>
+<span class="sd">            time difference of the closest spike in the comparing train is the</span>
+<span class="sd">            value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">time_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ita</span> <span class="o">=</span> <span class="n">reference_train</span><span class="o">.</span><span class="n">__iter__</span><span class="p">()</span>
+        <span class="n">itb</span> <span class="o">=</span> <span class="n">comparing_train</span><span class="o">.</span><span class="n">__iter__</span><span class="p">()</span>
+        
+        <span class="n">val_a</span> <span class="o">=</span> <span class="n">ita</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="n">val_b</span> <span class="o">=</span> <span class="n">itb</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+        <span class="n">idx_a</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">idx_b</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span><span class="p">(</span><span class="bp">True</span><span class="p">):</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">val_b</span> <span class="o">-</span> <span class="n">val_a</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">diff</span> <span class="o">&gt;</span> <span class="n">window</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">val_a</span> <span class="o">&gt;</span> <span class="n">val_b</span><span class="p">:</span>
+                    <span class="n">val_b</span> <span class="o">=</span> <span class="n">itb</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                    <span class="n">idx_b</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">val_a</span> <span class="o">=</span> <span class="n">ita</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                    <span class="n">idx_a</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">idx_a</span> <span class="ow">in</span> <span class="n">time_dict</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">time_dict</span><span class="p">[</span><span class="n">idx_a</span><span class="p">]):</span>
+                        <span class="n">time_dict</span><span class="p">[</span><span class="n">idx_a</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_b</span> <span class="o">-</span> <span class="n">val_a</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">time_dict</span><span class="p">[</span><span class="n">idx_a</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_b</span> <span class="o">-</span> <span class="n">val_a</span>
+                    
+                <span class="k">if</span> <span class="n">val_a</span> <span class="o">==</span> <span class="n">val_b</span><span class="p">:</span>
+                    <span class="n">val_a</span> <span class="o">=</span> <span class="n">ita</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                    <span class="n">idx_a</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">val_b</span> <span class="o">=</span> <span class="n">itb</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                    <span class="n">idx_b</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">val_a</span> <span class="o">&lt;</span> <span class="n">val_b</span><span class="p">:</span>
+                        <span class="n">val_a</span> <span class="o">=</span> <span class="n">ita</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                        <span class="n">idx_a</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">val_b</span> <span class="o">=</span> <span class="n">itb</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+                        <span class="n">idx_b</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">time_dict</span>
+    
+    <span class="k">return</span> <span class="n">time_dict</span>
+    </div>
+<div class="viewcode-block" id="poisson_train"><a class="viewcode-back" href="../../../spiketrain.html#neuronpy.util.spiketrain.poisson_train">[docs]</a><span class="k">def</span> <span class="nf">poisson_train</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generator function for a Homogeneous Poisson train.</span>
+<span class="sd">    </span>
+<span class="sd">    :param frequency: The mean spiking frequency.</span>
+<span class="sd">    :param duration: Maximum duration.</span>
+<span class="sd">    :param start_time: Timestamp.</span>
+<span class="sd">    :param seed: Seed for the random number generator. If None, this will be</span>
+<span class="sd">            decided by numpy, which chooses the system time.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: A relative spike time from t=start_time, in seconds (not ms).</span>
+<span class="sd">    </span>
+<span class="sd">    EXAMPLE::</span>
+<span class="sd">        </span>
+<span class="sd">        # Make a list of spikes at 20 Hz for 3 seconds</span>
+<span class="sd">        spikes = [i for i in poisson_train(20, 3)]</span>
+<span class="sd">        </span>
+<span class="sd">    EXAMPLE::</span>
+<span class="sd">        </span>
+<span class="sd">        # Use dynamically in a program</span>
+<span class="sd">        # Care needs to be taken with this scenario because the generator will</span>
+<span class="sd">        # generate spikes until the program or spike_gen object is terminated.</span>
+<span class="sd">        spike_gen = poisson_train(20, duration=sys.float_info.max)</span>
+<span class="sd">        spike = spike_gen.next()</span>
+<span class="sd">        # Process the spike, to other programmatic things</span>
+<span class="sd">        spike = spike_gen.next() # Get another spike</span>
+<span class="sd">        # etc.</span>
+<span class="sd">        # Terminate the program.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cur_time</span> <span class="o">=</span> <span class="n">start_time</span>
+    <span class="n">rangen</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">mtrand</span><span class="o">.</span><span class="n">RandomState</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">rangen</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">isi</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">frequency</span>
+    <span class="k">while</span> <span class="n">cur_time</span> <span class="o">&lt;=</span> <span class="n">duration</span><span class="p">:</span>
+        <span class="n">cur_time</span> <span class="o">+=</span> <span class="n">isi</span> <span class="o">*</span> <span class="n">rangen</span><span class="o">.</span><span class="n">exponential</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cur_time</span> <span class="o">&gt;</span> <span class="n">duration</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">yield</span> <span class="n">cur_time</span>
+        </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

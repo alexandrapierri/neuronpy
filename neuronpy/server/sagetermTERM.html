@@ -1,0 +1,27 @@
+<html>
+<head>
+	<title>termlib Socket Sample</title>
+	<script language="JavaScript" type="text/javascript" src="termlib.js"></script>
+    <script language="JavaScript" type="text/javascript" src="sageterm.js"></script>
+</head>
+<body>
+<div id="termDiv"></div>
+<form>
+Some text field to change keyboard focus:
+<input type="text" name="some_text_field" />
+</form>
+
+<script type="text/javascript">
+// This script sets the keyboard focus to the terminal pane when it is clicked.
+termDiv.onclick=function(e) {
+  TermGlobals.keylock = false // Grab the keyboard
+  //term.globals.enableKeyboard(term)
+  if (e && e.stopPropagation)
+    e.stopPropagation()
+  else
+    event.cancelBubble=true
+}
+</script>
+<a href="javascript:termOpen()" onfocus="if(this.blur)this.blur();" onmouseover="window.status='open terminal'; return true" onmouseout="window.status=''; return true" class="termopen">&gt; open terminal&nbsp;</a>
+</body>
+</html>

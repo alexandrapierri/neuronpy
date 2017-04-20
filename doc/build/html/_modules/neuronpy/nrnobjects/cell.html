@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.nrnobjects.cell &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.nrnobjects.cell</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">Generic NEURON cell object. Provides template abstract methods and a generic </span>
+<span class="sd">design for NEURON cell models. </span>
+
+<span class="sd">AUTHORS:</span>
+<span class="sd">- Thomas McTavish (2010-11-04).</span>
+<span class="sd">- Thomas McTavish (2011-11-06) Update for cleaner docstring and error reporting.</span>
+<span class="sd">- Thomas McTavish (2012-02-04) Added _resolve_attr to retrieve attributes, </span>
+<span class="sd">    sub-attributes, and sub-elements via strings.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">textwrap</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">neuron</span> <span class="kn">import</span> <span class="n">h</span> <span class="k">as</span> <span class="n">nrn</span>
+
+<div class="viewcode-block" id="Cell"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell">[docs]</a><span class="k">class</span> <span class="nc">Cell</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic cell template for NEURON cell objects.</span>
+<span class="sd">        </span>
+<span class="sd">    .. Note::</span>
+<span class="sd">    </span>
+<span class="sd">    Subclasses can override :func:`__init__` completely, </span>
+<span class="sd">    or do some of their own initialization first, and then </span>
+<span class="sd">    let :class:`Cell` do its initializing, and then the </span>
+<span class="sd">    subclass can finish. For example::</span>
+<span class="sd">        </span>
+<span class="sd">        class ChildCell(Cell):</span>
+<span class="sd">            def __init__(self):</span>
+<span class="sd">                # Do some stuff</span>
+<span class="sd">                Cell.__init__(self)</span>
+<span class="sd">                # Do some more stuff</span>
+
+<span class="sd">    You might have to get fancy with arguments::</span>
+<span class="sd">        </span>
+<span class="sd">        class ChildCell(Cell):</span>
+<span class="sd">            def __init__(self, someparameter=someval, **kwargs):</span>
+<span class="sd">                # Do some stuff</span>
+<span class="sd">                self.someparameter = someparameter</span>
+<span class="sd">                Cell.__init__(self, **kwargs)</span>
+<span class="sd">                # Do some more stuff</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nameprefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nameprefix</span> <span class="o">=</span> <span class="n">nameprefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">soma</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">synlist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_sections</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_topology</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_subsets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_geometry</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_biophysics</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_synapses</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="mi">0</span>
+    
+<span class="c">#    def __getattr__(self, name):</span>
+<span class="c">#        return self._resolve_attr(self, name)</span>
+
+    <span class="k">def</span> <span class="nf">_resolve_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">attrspec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Permit sub-attribute or sub-element retrieval through dot syntax.</span>
+<span class="sd">        This allows dynamic programming as strings can be assembled</span>
+<span class="sd">        to retrieve particular cell subobjects and subelements from the cell.</span>
+<span class="sd">        For example, to connect a NetStim to a cell object that has a variety </span>
+<span class="sd">        of synapses, a method could dynamically construct a </span>
+<span class="sd">        string to connect that synapse:</span>
+<span class="sd">            </span>
+<span class="sd">            def attach_netstims(cells, loc):</span>
+<span class="sd">                for cell in cells:</span>
+<span class="sd">                    stim = nrn.NetStim()</span>
+<span class="sd">                    # Set stim params</span>
+<span class="sd">                    nc = nrn.NetCon(stim, getattr(cell, loc))</span>
+<span class="sd">        </span>
+<span class="sd">        To attach a NetStim to a cell that has ExpSyn objects on the apical and</span>
+<span class="sd">        dendritic trees, say, then this could be arranged as:</span>
+<span class="sd">            </span>
+<span class="sd">            attach_netstims(cells, &#39;expsyns.apical_syn&#39;)</span>
+<span class="sd">            attach_netstims(cells, &#39;expsyns.basal_syn&#39;)</span>
+<span class="sd">            </span>
+<span class="sd">        Note that the sub elements must have a string label, but single list</span>
+<span class="sd">        indices can also be addressed. For example ``synlist[2]`` could be</span>
+<span class="sd">        called with the string &quot;synlist.2&quot;.</span>
+<span class="sd">            </span>
+<span class="sd">        :param obj: Object to query the attribute</span>
+<span class="sd">        :param attrspec: String of the attribute or element label to retrieve.</span>
+<span class="sd">        :return: The attribute or object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">attrssplit</span> <span class="o">=</span> <span class="n">attrspec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">attrssplit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">attr</span><span class="p">)]</span> <span class="c"># In case list element</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attrssplit</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">attrspec</span> <span class="o">=</span> <span class="n">attrspec</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)[</span><span class="mi">2</span><span class="p">]</span> <span class="c"># right part of the string.</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_attr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attrspec</span><span class="p">)</span> <span class="c"># Recurse</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+<div class="viewcode-block" id="Cell.create_sections"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.create_sections">[docs]</a>    <span class="k">def</span> <span class="nf">create_sections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the sections of the cell. Remember to do this</span>
+<span class="sd">        in the form::</span>
+<span class="sd">            </span>
+<span class="sd">            self.soma = nrn.Section(name=&#39;soma&#39;, cell=self)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;create_sections() is not implemented.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="n">errstr</span> <span class="o">+=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_sections</span><span class="o">.</span><span class="n">__doc__</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Cell.build_topology"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.build_topology">[docs]</a>    <span class="k">def</span> <span class="nf">build_topology</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Connect the sections of the cell to build a tree. &quot;0&quot; ends are</span>
+<span class="sd">        toward the soma and &quot;1&quot; ends are distal. For example, to connect </span>
+<span class="sd">        the &quot;0&quot; end of a dendrite to the &quot;1&quot; end of the soma::</span>
+<span class="sd">            </span>
+<span class="sd">            self.dend.connect(self.soma(1))  </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+<span class="c">#        errstr = &quot;build_topology() is not implemented.\n&quot;</span>
+<span class="c">#        errstr += textwrap.dedent(self.build_topology.__doc__)</span>
+<span class="c">#        raise NotImplementedError(errstr)</span>
+        <span class="k">pass</span> <span class="c"># May be a 1-compartment neuron. No need to abstract. </span>
+    </div>
+<div class="viewcode-block" id="Cell.define_geometry"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.define_geometry">[docs]</a>    <span class="k">def</span> <span class="nf">define_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the 3D geometry of the cell. The length, diameter, and</span>
+<span class="sd">        number of segments should be set for each section as well as</span>
+<span class="sd">        the section&#39;s (x,y,z) coordinates, if necessary. For example::</span>
+<span class="sd">            </span>
+<span class="sd">            self.soma.L = self.soma.diam = 12.6157 # microns</span>
+<span class="sd">            self.dend.L = 200                      # microns</span>
+<span class="sd">            self.dend.diam = 1                     # microns</span>
+<span class="sd">            self.dend.nseg = 5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;define_geometry() is not implemented.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="n">errstr</span> <span class="o">+=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">define_geometry</span><span class="o">.</span><span class="n">__doc__</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Cell.define_biophysics"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.define_biophysics">[docs]</a>    <span class="k">def</span> <span class="nf">define_biophysics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign the membrane properties across the cell. For example::</span>
+<span class="sd">            </span>
+<span class="sd">            for sec in self.all: # &#39;all&#39; exists in parent object.</span>
+<span class="sd">                sec.Ra = 100    # Axial resistance in Ohm * cm</span>
+<span class="sd">                sec.cm = 1      # Membrane capacitance in micro Farads / cm^2</span>
+<span class="sd">            </span>
+<span class="sd">            # Insert active Hodgkin-Huxley current in the soma</span>
+<span class="sd">            self.soma.insert(&#39;hh&#39;)</span>
+<span class="sd">            self.soma.gnabar_hh = 0.12  # Sodium conductance in S/cm2</span>
+<span class="sd">            self.soma.gkbar_hh = 0.036  # Potassium conductance in S/cm2</span>
+<span class="sd">            self.soma.gl_hh = 0.0003    # Leak conductance in S/cm2</span>
+<span class="sd">            self.soma.el_hh = -54.3     # Reversal potential in mV</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">errstr</span> <span class="o">=</span> <span class="s">&quot;define_biophysics() is not implemented.</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="n">errstr</span> <span class="o">+=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">define_biophysics</span><span class="o">.</span><span class="n">__doc__</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Cell.create_synapses"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.create_synapses">[docs]</a>    <span class="k">def</span> <span class="nf">create_synapses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create synapses (such as ExpSyn) at various</span>
+<span class="sd">        segments and add them to self.synlist.</span>
+<span class="sd">            </span>
+<span class="sd">        For example, in a ball-and-stick cell with a soma and single</span>
+<span class="sd">        dendrite, to add an exponentially decaying (tau = 2 ms) synapse </span>
+<span class="sd">        in the middle of the dendrite::</span>
+<span class="sd">            </span>
+<span class="sd">            syn = nrn.ExpSyn(self.dend(0.5))</span>
+<span class="sd">            syn.tau = 2</span>
+<span class="sd">            self.synlist.append(syn)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span> <span class="c"># Ignore if child does not implement.</span>
+    </div>
+<div class="viewcode-block" id="Cell.build_subsets"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.build_subsets">[docs]</a>    <span class="k">def</span> <span class="nf">build_subsets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build section list iterators. This defines the &#39;all&#39;, </span>
+<span class="sd">        SectionList, but subclasses may want to define others. </span>
+<span class="sd">        If overriden, call Cell.build_subsets(self) to create the &#39;all&#39;</span>
+<span class="sd">        SectionList.</span>
+<span class="sd">            </span>
+<span class="sd">        For example, in a subclass with two dendrites, </span>
+<span class="sd">        ``self.dend[0]`` and ``self.dend[1]`` already defined, </span>
+<span class="sd">        we can add them to a &quot;dendlist&quot; iterator::</span>
+<span class="sd">            </span>
+<span class="sd">            Cell.build_subsets(self) # Make &#39;all&#39; iterator</span>
+<span class="sd">            self.dendlist = nrn.SectionList()</span>
+<span class="sd">            self.dendlist.append(self.dend[0])</span>
+<span class="sd">            self.dendlist.append(self.dend[1])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">SectionList</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">wholetree</span><span class="p">(</span><span class="n">sec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="Cell.connect2target"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.connect2target">[docs]</a>    <span class="k">def</span> <span class="nf">connect2target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make a new :class:`NetCon` with this cell&#39;s membrane</span>
+<span class="sd">        potential at the soma as the source (i.e. the spike detector)</span>
+<span class="sd">        onto the target passed in (i.e. a synapse on a cell).</span>
+<span class="sd">        Subclasses may override with other spike detectors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nc</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">NetCon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">_ref_v</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">sec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="p">)</span>
+        <span class="n">nc</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">thresh</span>
+        <span class="k">return</span> <span class="n">nc</span>
+    </div>
+<div class="viewcode-block" id="Cell.is_art"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.is_art">[docs]</a>    <span class="k">def</span> <span class="nf">is_art</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Flag to check if we are an integrate-and-fire artificial cell.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    </div>
+<div class="viewcode-block" id="Cell.set_position"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.set_position">[docs]</a>    <span class="k">def</span> <span class="nf">set_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the base location in 3D and move all other</span>
+<span class="sd">        parts of the cell relative to that location.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">nrn</span><span class="o">.</span><span class="n">n3d</span><span class="p">())):</span>
+                <span class="n">nrn</span><span class="o">.</span><span class="n">pt3dchange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> \
+                               <span class="n">x</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="o">+</span><span class="n">nrn</span><span class="o">.</span><span class="n">x3d</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> \
+                               <span class="n">y</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">+</span><span class="n">nrn</span><span class="o">.</span><span class="n">y3d</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> \
+                               <span class="n">z</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">z</span><span class="o">+</span><span class="n">nrn</span><span class="o">.</span><span class="n">z3d</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> \
+                               <span class="n">nrn</span><span class="o">.</span><span class="n">diam3d</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">;</span> <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">z</span>
+    </div>
+<div class="viewcode-block" id="Cell.rotateZ"><a class="viewcode-back" href="../../../cell.html#neuronpy.nrnobjects.cell.Cell.rotateZ">[docs]</a>    <span class="k">def</span> <span class="nf">rotateZ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rotate the cell about the Z axis.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rot_m</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)],</span> \
+                             <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="o">-</span><span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)]])</span>
+        <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">nrn</span><span class="o">.</span><span class="n">n3d</span><span class="p">())):</span>
+                <span class="n">xy</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">([</span><span class="n">nrn</span><span class="o">.</span><span class="n">x3d</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">nrn</span><span class="o">.</span><span class="n">y3d</span><span class="p">(</span><span class="n">i</span><span class="p">)],</span> <span class="n">rot_m</span><span class="p">)</span>
+                <span class="n">nrn</span><span class="o">.</span><span class="n">pt3dchange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">nrn</span><span class="o">.</span><span class="n">z3d</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> \
+                               <span class="n">nrn</span><span class="o">.</span><span class="n">diam3d</span><span class="p">(</span><span class="n">i</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>vartest &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Utilities" href="util.html" />
+    <link rel="next" title="Examples, Demos, and Tutorials" href="examples/index.html" />
+    <link rel="prev" title="timeseries" href="timeseries.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/index.html" title="Examples, Demos, and Tutorials"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="timeseries.html" title="timeseries"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="vartest">
+<h1>vartest<a class="headerlink" href="#vartest" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.util.vartest"></span><p>Variable testing procedures.</p>
+<p>Utility procedures to evaluate variables to determine if they pass simple
+tests. These tests are typically to ensure that a variable is of a particular
+type and a particular format. These methods raise informative exceptions 
+if they fail.</p>
+<p>AUTHORS:</p>
+<ul class="simple">
+<li>THOMAS MCTAVISH (2010-02-05): initial version</li>
+</ul>
+<p>EXAMPLES:</p>
+<p>Test that a variable is greater than 0.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">greater_than</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This does not raise an exception. This shows that <cite>x</cite> may be an <cite>int</cite> or <cite>x</cite>
+may be a <cite>float</cite>. Try a negative value.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">greater_than</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="go">The variable tested needs to be &gt; 0.</span>
+<span class="go">The variable tested is of &lt;type &#39;int&#39;&gt; and</span>
+<span class="go">has a wrong value of -2.</span>
+</pre></div>
+</div>
+<p>In this case, the error reported is fairly informative, but note that it can
+be made more informative by telling us the name of the parameter. The next
+example tries a different format altogether and passes in the name of the
+variable so that the user understands which variable is in error.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">some_var</span><span class="o">=</span><span class="s">&#39;abc&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">greater_than</span><span class="p">(</span><span class="n">some_var</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;some_var&#39;</span><span class="p">)</span>
+<span class="go">some_var needs to be &gt; 0.</span>
+<span class="go">some_var is of &lt;type &#39;str&#39;&gt; and has a wrong value of abc.</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="neuronpy.util.vartest.greater_than">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">greater_than</tt><big>(</big><em>test_var</em>, <em>val=0.0</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#greater_than"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.greater_than" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is a float and is
+greater than a number.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> (<em>float or int</em>) &#8211; the variable to test</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.vartest.greater_than_or_equal">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">greater_than_or_equal</tt><big>(</big><em>test_var</em>, <em>val=0.0</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#greater_than_or_equal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.greater_than_or_equal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is a float and is
+greater than zero.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> (<em>float or int</em>) &#8211; the variable to test</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.vartest.inrange">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">inrange</tt><big>(</big><em>test_var</em>, <em>min=0.0</em>, <em>max=1.0</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#inrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.inrange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is a float and is
+greater than or equal to min and less than or
+equal to max.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> (<em>float or int</em>) &#8211; the variable to test</li>
+<li><strong>min</strong> (<em>float or int</em>) &#8211; Minimum value</li>
+<li><strong>max</strong> (<em>float or int</em>) &#8211; Maximum value</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.vartest.is1Dvector">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">is1Dvector</tt><big>(</big><em>test_var</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#is1Dvector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.is1Dvector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is a 1-dimensional list or numpy array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> &#8211; the variable to test</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.vartest.isbool">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">isbool</tt><big>(</big><em>test_var</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#isbool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.isbool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is an explicit boolean (True or False) value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; the variable to test</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.vartest.isint">
+<tt class="descclassname">neuronpy.util.vartest.</tt><tt class="descname">isint</tt><big>(</big><em>test_var</em>, <em>name=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/vartest.html#isint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.vartest.isint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests to see that <cite>test_var</cite> is an integer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>test_var</strong> (<a class="reference external" href="http://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; the variable to test</li>
+<li><strong>name</strong> (<em>string; default None</em>) &#8211; the name of the parameter to help inform the user
+which variable is problematic, if it does not pass.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Throws :</th><td class="field-body"><p class="first last">exception if the test_var does not meet the
+requirements and describes the problem.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="timeseries.html"
+                        title="previous chapter">timeseries</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples/index.html"
+                        title="next chapter">Examples, Demos, and Tutorials</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/vartest.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/index.html" title="Examples, Demos, and Tutorials"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="timeseries.html" title="timeseries"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

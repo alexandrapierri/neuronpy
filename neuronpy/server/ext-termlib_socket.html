@@ -1,0 +1,54 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Testing termlib with extjs</title>
+  <link rel="stylesheet" type="text/css" href="../../../resources/css/ext-all.css" />
+  <link rel="stylesheet" type="text/css" href="css/term_styles.css" />
+
+    <!-- GC -->
+ 	<!-- LIBS -->
+ 	<script type="text/javascript" src="../../../adapter/ext/ext-base.js"></script>
+ 	<!-- ENDLIBS -->
+
+    <script type="text/javascript" src="../../../ext-all-debug.js"></script>
+
+  <script type="text/javascript" src="js/termlib.js"></script>
+  <script type="text/javascript" src="js/ext-termlib.js"></script>
+  <script type="text/javascript" src="js/ext-termlib_socket.js"></script>  
+  <script type="text/javascript">
+
+  Ext.onReady(function() {
+    var win = new Ext.Window({
+        layout:'fit',
+        width:500,
+        height:300,
+        title: 'ExtJS/termlib',
+        items: new Ext.ux.TermLibSocket()
+    });
+    win.show(this);
+    
+    // Install listeners to direct keyboard events to the
+    // window when active and ignore otherwise.
+    win.on('activate', function() {
+        TermGlobals.keylock = false
+    });
+    win.on('deactivate', function() {
+        TermGlobals.keylock = true
+    });
+
+    // Dummy window to test keyboard focus
+    var win2 = new Ext.Window({
+        layout:'fit',
+        width:50,
+        height:30,
+        title: 'Dummy'
+    });
+    win2.show(this);
+    
+  });
+  
+</script>
+</head>
+<body>
+</body>
+</html>

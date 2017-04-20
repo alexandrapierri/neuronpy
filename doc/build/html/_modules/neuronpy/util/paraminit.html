@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.paraminit &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.paraminit</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Initialization of variables passed in the command line or defined in a </span>
+<span class="sd">parameter file.</span>
+
+<span class="sd">Executes commands defined in a parameters file, as well as processes subsequent </span>
+<span class="sd">Python commands delivered on the command line. The usage from the command line </span>
+<span class="sd">is then::</span>
+<span class="sd">    </span>
+<span class="sd">    python PYTHONFILE [PARAM_FILES &amp;| cmds]</span>
+
+<span class="sd">* ``PYTHONFILE`` is the name of a Python script or file.</span>
+<span class="sd">* ``PARAM_FILES`` is the name(s) of a Python file that execute and may sets </span>
+<span class="sd">        global and/or local parameters.</span>
+<span class="sd">* ``cmds`` are optional Python commands. These can be used to override values </span>
+<span class="sd">    set in the parameter file(s) or add new functionality.</span>
+
+<span class="sd">EXAMPLE:</span>
+
+<span class="sd">Run the simulation defined in ``main.py``, which contains at least the </span>
+<span class="sd">following code.</span>
+
+<span class="sd">::</span>
+
+<span class="sd">    import sys</span>
+<span class="sd">    from neuron import nrn # a nrn object</span>
+<span class="sd">    from neuron import h   # a hoc object</span>
+<span class="sd">    from neuronpy.util import paraminit</span>
+<span class="sd">    </span>
+<span class="sd">    # The file ``params.py`` in this same directory contains a dict, </span>
+<span class="sd">    # ``sim_var``, which defines our variables.</span>
+<span class="sd">    from params import sim_var</span>
+<span class="sd">    </span>
+<span class="sd">    def run():</span>
+<span class="sd">        # Run the simulation</span>
+<span class="sd">        print &quot;Do some amazing science.&quot;</span>
+<span class="sd">        </span>
+<span class="sd">    if __name__ == &quot;__main__&quot;:</span>
+<span class="sd">        \&quot;\&quot;\&quot;Run when called from the command line.\&quot;\&quot;\&quot;</span>
+<span class="sd">        local_dict = {}</span>
+<span class="sd">        paraminit.parse_args(sys.argv[1:], globals(), local_dict)</span>
+<span class="sd">        if &#39;sim_var&#39; in local_dict:</span>
+<span class="sd">            # Replace current values with those in the local_dict</span>
+<span class="sd">            replacing_dict = local_dict[&#39;sim_var&#39;]</span>
+<span class="sd">            for key, val in replacing_dict.items():</span>
+<span class="sd">                sim_var[key] = val</span>
+<span class="sd">        run()  # Run the simulation.</span>
+
+<span class="sd">From the command line, execute this file with::</span>
+<span class="sd">    </span>
+<span class="sd">    python main.py</span>
+<span class="sd">    </span>
+<span class="sd">It is important to point out that a file called &quot;params.py&quot; must</span>
+<span class="sd">also exist at the same level as main.py, unless it is overridden with another</span>
+<span class="sd">parameter file as in::</span>
+<span class="sd">    </span>
+<span class="sd">    python main.py some_params_file.py</span>
+<span class="sd">    </span>
+<span class="sd">To pass in other commands, you could deliver something like::</span>
+<span class="sd">    </span>
+<span class="sd">    python main.py my_debugging_flag=True &#39;print &quot;RUNNING IN DEBUGGING MODE&quot;&#39;</span>
+<span class="sd">    </span>
+<span class="sd">which will override ``my_debugging_flag`` if it is defined in </span>
+<span class="sd">``params.py``, or set it as a new global variable if it is not defined,</span>
+<span class="sd">and will print the statement before executing the simulation.</span>
+
+<span class="sd">@author: - Thomas McTavish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="load_param_file"><a class="viewcode-back" href="../../../paraminit.html#neuronpy.util.paraminit.load_param_file">[docs]</a><span class="k">def</span> <span class="nf">load_param_file</span><span class="p">(</span><span class="n">python_file</span><span class="p">,</span> <span class="n">global_dict</span><span class="p">,</span> <span class="n">local_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load the parameters file(s) into Python&#39;s globals dictionary. This is </span>
+<span class="sd">    called by :func:`plot_spikes`.</span>
+<span class="sd">        </span>
+<span class="sd">    :param python_file: Python file that can be executed with the</span>
+<span class="sd">            `execfile function </span>
+<span class="sd">            &lt;http://docs.python.org/library/functions.html#execfile&gt;`_.</span>
+<span class="sd">            </span>
+<span class="sd">    :param global_dict: are the globals from the module that called into this </span>
+<span class="sd">        module. Calling ``globals()`` from this module will not carry to the </span>
+<span class="sd">        module that is running the simulation.</span>
+<span class="sd">        </span>
+<span class="sd">    :param local_dict: is the local dict from the calling module.</span>
+<span class="sd">        Calling ``locals()`` from this module will not carry to the </span>
+<span class="sd">        module that is running the simulation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">execfile</span><span class="p">(</span><span class="n">python_file</span><span class="p">,</span> <span class="n">global_dict</span><span class="p">,</span> <span class="n">local_dict</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="p">(</span><span class="n">errno</span><span class="p">,</span> <span class="n">strerror</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&quot;I/O error({0}): {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">errno</span><span class="p">,</span> <span class="n">strerror</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errno</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Cannot find the file </span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">python_file</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Unexpected error:&quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">raise</span>
+</div>
+<div class="viewcode-block" id="parse_args"><a class="viewcode-back" href="../../../paraminit.html#neuronpy.util.paraminit.parse_args">[docs]</a><span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">,</span> <span class="n">global_dict</span><span class="p">,</span> <span class="n">local_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse command line arguments and set global parameters. Each argument is</span>
+<span class="sd">    first tested to see if it is a ``&#39;.py&#39;`` Python file, in which case, it is</span>
+<span class="sd">    executed. Otherwise, it is executed as a command.</span>
+<span class="sd">    </span>
+<span class="sd">    :param argv: is a list of string elements. Since the elements are separated</span>
+<span class="sd">        by spaces, each element needs to be a contigous Python statement like</span>
+<span class="sd">        ``variable=value``, with just an equals sign between the variable name </span>
+<span class="sd">        and its value and no space. One can use spaces by wrapping an element</span>
+<span class="sd">        in single quotes as in ``&#39;print &quot;Hello&quot;&#39;``.</span>
+<span class="sd">        </span>
+<span class="sd">        If the argument ends with ``&#39;.py&#39;`` it is assumed to be a Python file </span>
+<span class="sd">        to execute.ython statement, it is</span>
+<span class="sd">        assumed to be a filename to a parameter file to load. If no parameters</span>
+<span class="sd">        file is specified, then the file ``params.py`` in the same </span>
+<span class="sd">        directory as the ``PYTHONFILE`` is loaded. If it does not exist, an</span>
+<span class="sd">        error will be thrown.</span>
+<span class="sd">    </span>
+<span class="sd">    :param global_dict: are the globals from the module that called into this </span>
+<span class="sd">        module. Calling ``globals()`` from this module will not carry to the </span>
+<span class="sd">        module that is running the simulation.</span>
+<span class="sd">        </span>
+<span class="sd">    :param local_dict: is the local dict from the calling module.</span>
+<span class="sd">        Calling ``locals()`` from this module will not carry to the </span>
+<span class="sd">        module that is running the simulation.</span>
+<span class="sd">        </span>
+<span class="sd">    :return cmd_files, cmds: the list of files and the list of cmds processed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cmd_files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cmds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">argv</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.py&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">load_param_file</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">global_dict</span><span class="p">,</span> <span class="n">local_dict</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">raise</span>
+                <span class="n">cmd_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">exec</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">global_dict</span><span class="p">,</span> <span class="n">local_dict</span><span class="p">)</span>
+                    <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">warnstr</span> <span class="o">=</span> <span class="s">&quot;WARNING: Do not know how to process statement </span><span class="se">\</span>
+<span class="s">                    </span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">print</span> <span class="n">warnstr</span>
+                    <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">cmd_files</span><span class="p">,</span> <span class="n">cmds</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

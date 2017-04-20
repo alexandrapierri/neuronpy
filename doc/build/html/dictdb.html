@@ -1,0 +1,351 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dictdb &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Utilities" href="util.html" />
+    <link rel="next" title="graphicsutil" href="graphicsutil.html" />
+    <link rel="prev" title="decorators" href="decorators.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graphicsutil.html" title="graphicsutil"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="decorators.html" title="decorators"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="dictdb">
+<h1>dictdb<a class="headerlink" href="#dictdb" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.util.dictdb"></span><p>Interface for a simple data store where the root and subtables are nested 
+Python <a class="reference external" href="http://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></a> objects.</p>
+<p>AUTHORS:</p>
+<ul class="simple">
+<li>THOMAS MCTAVISH (2010-03-01): initial version, 0.1</li>
+</ul>
+<p>EXAMPLES:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">dictdb</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="n">the_dict</span> <span class="o">=</span> <span class="p">{</span> \
+    <span class="s">&#39;sub1&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+        <span class="s">&#39;key_a&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;key_a_a&#39;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s">&#39;time_stamp&#39;</span> <span class="p">:</span> \
+                <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">640692</span><span class="p">),</span> \
+            <span class="s">&#39;key_a_b&#39;</span> <span class="p">:</span> <span class="s">&#39;ABCDEFG&#39;</span> <span class="p">},</span> \
+        <span class="s">&#39;key_b&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> \
+        <span class="s">&#39;key_c&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;key_c_a&#39;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span> \
+            <span class="s">&#39;key_c_b&#39;</span> <span class="p">:</span> <span class="s">&#39;HIJKLMNO&#39;</span> <span class="p">}},</span> \
+    <span class="s">&#39;sub2&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+        <span class="s">&#39;key_a&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;key_a_a&#39;</span> <span class="p">:</span> <span class="mi">2</span><span class="p">,</span> \
+            <span class="s">&#39;time_stamp&#39;</span> <span class="p">:</span> \
+                <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2010</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">640692</span><span class="p">),</span> \
+            <span class="s">&#39;key_a_b&#39;</span> <span class="p">:</span> <span class="s">&#39;XYZPDQ&#39;</span> <span class="p">},</span> \
+        <span class="s">&#39;key_b&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> \
+        <span class="s">&#39;key_c&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;key_c_a&#39;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s">&#39;key_c_b&#39;</span> <span class="p">:</span> <span class="s">&#39;ABCDEFG&#39;</span> <span class="p">}},</span> \
+    <span class="s">&#39;different_sub1&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+        <span class="s">&#39;different_key_a&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;different_key_a_a&#39;</span> <span class="p">:</span> <span class="mi">3</span><span class="p">,</span> \
+            <span class="s">&#39;different_key_a_b&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="p">},</span> \
+        <span class="s">&#39;different_key_b&#39;</span> <span class="p">:</span> <span class="bp">None</span><span class="p">,</span> \
+        <span class="s">&#39;different_key_c&#39;</span> <span class="p">:</span> <span class="p">{</span> \
+            <span class="s">&#39;different_key_c_a&#39;</span> <span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> \
+            <span class="s">&#39;different_key_c_b&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="s">&#39;c&#39;</span><span class="p">]</span> <span class="p">}}</span> \
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Nodes <tt class="docutils literal"><span class="pre">'sub1_a'</span></tt>, <tt class="docutils literal"><span class="pre">'sub1_b'</span></tt>, and <tt class="docutils literal"><span class="pre">'different_sub1_a'</span></tt> refer to trunk
+nodes, which may be thought of as records in the database.
+Notice that in this dict, subdictionaries can each be of arbitrary depth, and 
+contain any data type that can be put into a dict. This example shows records 
+<tt class="docutils literal"><span class="pre">'sub1_a'</span></tt> and  <tt class="docutils literal"><span class="pre">'sub1_b'</span></tt> share the same structure, but <tt class="docutils literal"><span class="pre">different_sub1</span></tt>
+contains different data types.</p>
+<p>There are two related functions for retrieving records: <a class="reference internal" href="#neuronpy.util.dictdb.filter_dict" title="neuronpy.util.dictdb.filter_dict"><tt class="xref py py-func docutils literal"><span class="pre">filter_dict()</span></tt></a> and 
+<a class="reference internal" href="#neuronpy.util.dictdb.match" title="neuronpy.util.dictdb.match"><tt class="xref py py-func docutils literal"><span class="pre">match()</span></tt></a>. Both approaches use user-defined <a class="reference external" href="http://docs.python.org/reference/expressions.html#lambda" title="(in Python v2.7)"><tt class="xref std std-keyword docutils literal"><span class="pre">lambda</span></tt></a> functions.
+The <a class="reference internal" href="#neuronpy.util.dictdb.filter_dict" title="neuronpy.util.dictdb.filter_dict"><tt class="xref py py-func docutils literal"><span class="pre">filter_dict()</span></tt></a> function is itself a generator function that operates 
+on <tt class="docutils literal"><span class="pre">(key,</span> <span class="pre">value,</span> <span class="pre">parent_keys)</span></tt> tuples. This function therefore allows 
+any of these values to be ignored and one can search for keys or values 
+irrespective of their key associations.</p>
+<p>The <a class="reference internal" href="#neuronpy.util.dictdb.match" title="neuronpy.util.dictdb.match"><tt class="xref py py-func docutils literal"><span class="pre">match()</span></tt></a> method permits multiple queries where a given key meets some
+condition. The key and the
+condition as a <a class="reference external" href="http://docs.python.org/reference/expressions.html#lambda" title="(in Python v2.7)"><tt class="xref std std-keyword docutils literal"><span class="pre">lambda</span></tt></a> function  are provided in a tuple: 
+<tt class="docutils literal"><span class="pre">('key',</span> <span class="pre">lambda</span> <span class="pre">v:</span> <span class="pre">&lt;some_operation_with_v&gt;)</span></tt> where <em>&#8220;some_operation_with_v&#8221;</em> 
+evaluates to <tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+<dl class="function">
+<dt id="neuronpy.util.dictdb.filter_dict">
+<tt class="descclassname">neuronpy.util.dictdb.</tt><tt class="descname">filter_dict</tt><big>(</big><em>the_dict</em>, <em>predicate=&lt;function &lt;lambda&gt; at 0x10a83e758&gt;</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/dictdb.html#filter_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.dictdb.filter_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter a dict by some function on <tt class="docutils literal"><span class="pre">(key,</span> <span class="pre">value,</span> <span class="pre">parent_key)</span></tt> tuples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>the_dict</strong> &#8211; The dict to filter.</li>
+<li><strong>predicate</strong> &#8211; A <a class="reference external" href="http://docs.python.org/reference/expressions.html#lambda" title="(in Python v2.7)"><tt class="xref std std-keyword docutils literal"><span class="pre">lambda</span></tt></a> function on <tt class="docutils literal"><span class="pre">(k,</span> <span class="pre">v,</span> <span class="pre">p)</span></tt>, 
+key, value, key_parent tuples. Where <tt class="docutils literal"><span class="pre">k</span></tt> and <tt class="docutils literal"><span class="pre">v</span></tt> are their normal,
+<tt class="docutils literal"><span class="pre">key-value``s</span> <span class="pre">and</span> <span class="pre">where</span> <span class="pre">``p</span></tt> is a list of sub-dict keys, from the 
+trunk of the_dict to the current key, <tt class="docutils literal"><span class="pre">k</span></tt>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>EXAMPLES:</p>
+<p>Retrieve a subdict that contains any value with <tt class="docutils literal"><span class="pre">'ABCDEFG'</span></tt>. In this 
+case, <tt class="docutils literal"><span class="pre">k</span></tt> and <tt class="docutils literal"><span class="pre">p</span></tt> in the lambda function are ignored.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">filtered</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">filter_dict</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">v</span><span class="o">==</span><span class="s">&#39;ABCDEFG&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Retrieve a subdict where the <tt class="docutils literal"><span class="pre">'time_stamp'</span></tt> is greater than 30 days.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">date_filter</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">k</span> <span class="o">==</span> <span class="s">&#39;time_stamp&#39;</span> <span class="ow">and</span> \
+            <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">&gt;=</span> <span class="mi">30</span>
+            
+<span class="n">filtered</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">filter_dict</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="n">date_filter</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>If a sub-key is not unique, then we can query the parent keys. In this 
+case, <tt class="docutils literal"><span class="pre">p</span></tt> is a list of keys starting from the first sub-dict to the 
+current key. Therefore, <tt class="docutils literal"><span class="pre">k</span> <span class="pre">==</span> <span class="pre">p[-1]</span></tt>. This example searches for string
+&#8216;ABCDEF&#8217;, but mandates that <tt class="docutils literal"><span class="pre">k</span> <span class="pre">==</span> <span class="pre">'key_c_b'</span></tt> and the parent key is
+<tt class="docutils literal"><span class="pre">p</span> <span class="pre">==</span> <span class="pre">'key_c'</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">k</span> <span class="o">==</span> <span class="s">&#39;key_c_b&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">p</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;key_c&#39;</span>
+            
+<span class="n">filtered</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">filter_dict</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">)))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.dictdb.match">
+<tt class="descclassname">neuronpy.util.dictdb.</tt><tt class="descname">match</tt><big>(</big><em>the_dict</em>, <em>queries</em>, <em>mode='AND'</em>, <em>search_type=0</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/dictdb.html#match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.dictdb.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the root items of <tt class="docutils literal"><span class="pre">the_dict</span></tt> where 
+nested keys match the conditions to some number of queries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>the_dict</strong> &#8211; The <a class="reference external" href="http://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></a> to search.</li>
+<li><strong>queries</strong> &#8211; <p>A tuple or list of 2- (or preferrably 3-) element tuples 
+with the first element being the nested key to search for and the 
+second tuple is the condition on that key&#8217;s value. If a query cannot 
+be processed, it will be ignored, but a warning will print.</p>
+<p>An optional third element can be specified as the list of parent
+keys to help speed the search query and also help guarantee precise 
+results. By default, the first key found in any nested dict that 
+matches the key being searched for in the 
+query (the first element in the tuple) will be the only key evaluated. 
+The search algorithm will not continue looking for the key in other 
+nested dicts. Therefore, duplicate keys in nested dicts should be 
+avoided. If they are used, however, then you can specify the key of 
+the parent.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is efficient to specify the parent keys as much as possible
+because the query key may be nested quite deep. Using parent keys
+permits a more direct lookup of the query key.</p>
+</div>
+</li>
+<li><strong>mode</strong> &#8211; <p>Is <tt class="docutils literal"><span class="pre">'AND'</span></tt> by default and can be <tt class="docutils literal"><span class="pre">'OR'</span></tt>. To mix,
+<tt class="docutils literal"><span class="pre">'AND'</span></tt> and <tt class="docutils literal"><span class="pre">'OR'</span></tt> queries, retrieve the sub-dictionary in one 
+condition and then call this function again passing in that
+sub-dictionary with queries for the other condition.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Two or more <tt class="docutils literal"><span class="pre">'AND'</span></tt> queries prune a copy of the dictionary. The
+first query returns a subdictionary that the second query operates
+on and so forth. Searches through the subdictionaries will 
+therefore be faster if the first queries prune more of the original
+dict than subsequent queries. Likewise, when mixing <tt class="docutils literal"><span class="pre">'AND'</span></tt> and 
+<tt class="docutils literal"><span class="pre">'OR'</span></tt> queries, it is more efficient to process <tt class="docutils literal"><span class="pre">'AND'</span></tt>
+queries first.</p>
+</div>
+</li>
+<li><strong>search_type</strong> &#8211; <p>By default is 0, but can be 1, or 2. Searches are
+depth-first. This number specifies what is to happen when a key (and
+any parent keys) are found:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">0</span></tt></dt>
+<dd>Shallow search. When a match is found exit up to the root dict and 
+do not continue searching the trunk this branch is on.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">1</span></tt></dt>
+<dd>Do not continue searching this branch.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">2</span></tt></dt>
+<dd>Continue search this branch for sub-keys with the same value.</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A sub-dict of <tt class="docutils literal"><span class="pre">the_dict</span></tt> where nested keys match the conditions
+to queries. The elements in the returned dict are
+copies of <tt class="docutils literal"><span class="pre">the_dict</span></tt>, which remains unaltered.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>EXAMPLES:</p>
+<p>To search for records where <tt class="docutils literal"><span class="pre">'key_a_a'</span> <span class="pre">==</span> <span class="pre">2</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">subdict</span> <span class="o">=</span> <span class="n">dictdb</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="p">(</span><span class="s">&#39;key_a_a&#39;</span><span class="p">,</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">==</span><span class="mi">2</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subdict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">print</span> <span class="n">key</span>
+</pre></div>
+</div>
+<p>This should print <tt class="docutils literal"><span class="pre">sub2</span></tt>.</p>
+<p>To make compound queries, pass a list of query-tuples.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">subdict</span> <span class="o">=</span> <span class="n">dictdb</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="p">[</span> \
+        <span class="p">(</span><span class="s">&#39;key_a_a&#39;</span><span class="p">,</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">==</span><span class="mi">2</span><span class="p">,[</span><span class="s">&#39;key_a&#39;</span><span class="p">]),</span> \
+        <span class="p">(</span><span class="s">&#39;different_key_a_b&#39;</span><span class="p">,</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">&gt;</span> <span class="mi">3</span><span class="p">,[</span><span class="s">&#39;different_key_a&#39;</span><span class="p">])</span> \
+        <span class="p">],</span> \
+        <span class="n">mode</span><span class="o">=</span><span class="s">&#39;OR&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subdict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">print</span> <span class="n">key</span>
+</pre></div>
+</div>
+<p>This should print <tt class="docutils literal"><span class="pre">sub2</span></tt> and <tt class="docutils literal"><span class="pre">different_sub1_a</span></tt>.</p>
+<p>In this case, each query is a list of 3-element tuples. The last
+element in the tuple specifies the parent dict of the particular key being
+searched for. This also makes an OR search of the terms.</p>
+<p>For complex or custom data types and expressions, you can define your own 
+function and pass that in as the second parameter in the query. The following
+example tests for a value in a list.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span>
+
+<span class="n">subdict</span> <span class="o">=</span> <span class="n">dictdb</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> \
+        <span class="p">(</span><span class="s">&#39;different_key_c_b&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">my_func</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)))</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subdict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">print</span> <span class="n">key</span>
+</pre></div>
+</div>
+<p>Here is another example that retrieves records with a timestamp older than
+30 days.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">subdict</span> <span class="o">=</span> <span class="n">dictdb</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> \
+        <span class="p">(</span><span class="s">&#39;time_stamp&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">days</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">subdict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">print</span> <span class="n">key</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="decorators.html"
+                        title="previous chapter">decorators</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="graphicsutil.html"
+                        title="next chapter">graphicsutil</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/dictdb.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="graphicsutil.html" title="graphicsutil"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="decorators.html" title="decorators"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

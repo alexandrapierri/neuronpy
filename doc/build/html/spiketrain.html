@@ -1,0 +1,973 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spiketrain &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Utilities" href="util.html" />
+    <link rel="next" title="timeseries" href="timeseries.html" />
+    <link rel="prev" title="platforminfo" href="platforminfo.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="timeseries.html" title="timeseries"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="platforminfo.html" title="platforminfo"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="spiketrain">
+<h1>spiketrain<a class="headerlink" href="#spiketrain" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.util.spiketrain"></span><p>Spike train utility methods.</p>
+<p>Utility methods for reading spike train files as well as to analyze spike train 
+matrices and vectors.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot" title="neuronpy.graphics.spikeplot.SpikePlot"><tt class="xref py py-class docutils literal"><span class="pre">SpikePlot</span></tt></a> for visualization of spike 
+trains.</p>
+</div>
+<p>AUTHORS:</p>
+<ul>
+<li><p class="first">THOMAS MCTAVISH (2010-03-01): initial version</p>
+</li>
+<li><dl class="first docutils">
+<dt>THOMAS MCTAVISH (2011-05-03): Additions mostly for synchrony analysis and </dt>
+<dd><p class="first last">filtering. Refactored as <tt class="docutils literal"><span class="pre">spiketrain</span></tt> instead of <tt class="docutils literal"><span class="pre">spiketrainutil</span></tt>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.closest_timing">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">closest_timing</tt><big>(</big><em>reference_train</em>, <em>comparing_train</em>, <em>window=100</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#closest_timing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.closest_timing" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each spike in the reference train, determine the closest spike time
+in the other train at least within some window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>reference_train</strong> &#8211; List of spike times of the reference train.</li>
+<li><strong>comparing_train</strong> &#8211; List of spike times in the comparing train.</li>
+<li><strong>window</strong> &#8211; Time window in ms to search.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dict where the keys are indices of the reference train and the
+time difference of the closest spike in the comparing train is the
+value.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.coincidence_factor">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">coincidence_factor</tt><big>(</big><em>ref</em>, <em>comp</em>, <em>window=5</em>, <em>isi=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#coincidence_factor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.coincidence_factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>The coincidence factor <img class="math" src="_images/math/913e49ea63c6c130bb8d9d1c3556b052ecc404f8.png" alt="\Gamma"/> between two spike trains is defined as</p>
+<div class="math">
+<p><img src="_images/math/84580e6711db2cdec81eddd13b8b15ab8512fca4.png" alt="\Gamma = \frac{N_\mathrm{coinc}- E \left( N_\mathrm{coinc} \right)}
+{\frac{1}{2}\left(N_\mathrm{ref}+N_\mathrm{comp}\right) - 
+E \left( N_\mathrm{coinc} \right)}"/></p>
+</div><p>where <img class="math" src="_images/math/91d961f0336eec035abae070e9f9454b88e194af.png" alt="N_{\mathrm{ref}}"/> are the number of spikes in the reference train,
+<img class="math" src="_images/math/b5d7b55232b77c71e877fd74129b202511b12b1d.png" alt="N_{\mathrm{comp}}"/> is the number of spikes in the comparing train, 
+<img class="math" src="_images/math/4203af1323ef590288d4abc34cf81295eb4c23ba.png" alt="N_{\mathrm{coinc}}"/> is the number of coincident spikes within a time window 
+<img class="math" src="_images/math/0a737670d481129e2ead6d7223437f3cf70ea53f.png" alt="\Delta"/>, <img class="math" src="_images/math/f6ff49bc6c763292368d5c8bf76c4601316c941b.png" alt="E \left( N_\mathrm{coinc} \right) = 2 v \Delta N_{\mathrm{ref}}"/> 
+is the expected number of coincident spikes that would be given by chance 
+if the spikes in the comparing train were generated by a homogeneous 
+Poisson process with its rate <img class="math" src="_images/math/a9f23bf124b6b2b2a993eb313c72e678664ac74a.png" alt="v"/>. This correlation measure has the range 
+[-1, 1] where 1 is perfectly correlated, 0 is not correlated, and -1 is 
+perfectly anti-correlated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ref</strong> &#8211; Spike times of the reference train. It is 
+assumed that the spike times are ordered sequentially.</li>
+<li><strong>comp</strong> &#8211; Spike times of the train that shifts in time.
+It is assumed that the spike times are ordered sequentially.</li>
+<li><strong>window</strong> &#8211; Time window to say that two spikes are synchronized.
+This has a default value of 5.</li>
+<li><strong>isi</strong> &#8211; If supplied, this is the isi of the comparing train. Otherwise,
+the rate of the train is computed by taking the last spike minus the
+first spike and dividing by the number of spikes in between.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Coincidence factor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.coincidence_factor_phase">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">coincidence_factor_phase</tt><big>(</big><em>ref</em>, <em>comp</em>, <em>window=5</em>, <em>num_intervals=13</em>, <em>isi=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#coincidence_factor_phase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.coincidence_factor_phase" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ref</strong> &#8211; Spike times of the reference train. It is 
+assumed that the spike times are ordered sequentially.</li>
+<li><strong>comp</strong> &#8211; Spike times of the comparing train that shifts in time.
+It is assumed that the spike times are ordered sequentially.</li>
+<li><strong>window</strong> &#8211; Time window to say that two spikes are synchronized.
+This has a default value of 5.</li>
+<li><strong>num_intervals</strong> &#8211; Number of iterations to perform, sliding
+<tt class="docutils literal"><span class="pre">comp</span></tt> from [-1/2, 1/2] the median of <tt class="docutils literal"><span class="pre">ref</span></tt>&#8216;s
+interspike interval. This should be an odd number to ensure a 
+precise sample about 0 delay.</li>
+<li><strong>isi</strong> &#8211; If supplied, this is the isi of the comparing train. Otherwise,
+the rate of the train is computed by taking the last spike minus the
+first spike and dividing by the number of spikes in between.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A vector of length <tt class="docutils literal"><span class="pre">num_intervals</span></tt> that corresponds to 
+coincidence factor values from a shift of -isi/2 to isi/2.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.coincident_spikes">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">coincident_spikes</tt><big>(</big><em>ref</em>, <em>comp</em>, <em>window=5</em>, <em>normalize=False</em>, <em>compfreq=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#coincident_spikes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.coincident_spikes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the fraction of coincident spikes between two trains. Coincidence is
+defined as a spike co-occurring within some time window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ref</strong> &#8211; Spike times of the reference train. It is 
+assumed that the spike times are ordered sequentially.</li>
+<li><strong>comp</strong> &#8211; Spike times of the comparing train that shifts in time.
+It is assumed that the spike times are ordered sequentially.</li>
+<li><strong>window</strong> &#8211; Time window to say that two spikes are coincident.
+This has a default value of 5 ms.</li>
+<li><strong>normalize</strong> &#8211; If <tt class="docutils literal"><span class="pre">True</span></tt>, values are normalized by the rate expected by
+chance, which is defined as <tt class="docutils literal"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">frequency(comp)</span> <span class="pre">*</span> <span class="pre">window</span> <span class="pre">*</span> <span class="pre">len(ref)</span></tt>.
+Also, a tuple is returned as 
+(normalized_coincidences, coincidences, expected_coincidences, total_spikes)
+where total_spikes is the length of both trains.</li>
+<li><strong>compfreq</strong> &#8211; Frequency in Hz of comparing train. If None, the mean frequency
+of the comparing train is calcluated and used. This is only used when 
+<em>normalize</em> is <tt class="docutils literal"><span class="pre">True</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A vector of length <tt class="docutils literal"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2*timewindow/dt</span></tt>. If normalize is <tt class="docutils literal"><span class="pre">True</span></tt>,
+return a tuple as 
+(normalized_coincidences, coincidences, expected_coincidences, total_spikes).</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.coincident_spikes_correlogram">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">coincident_spikes_correlogram</tt><big>(</big><em>ref</em>, <em>comp</em>, <em>window=5</em>, <em>dt=1</em>, <em>timewindow=100</em>, <em>normalize=False</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#coincident_spikes_correlogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.coincident_spikes_correlogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the correlogram of coincident spikes between two trains. Coincidence is
+defined as a spike co-occurring within some time window. The number of 
+coincidences is returned as a vector of len(1 + (2*timewindow)). This means that
+the middle index is the value at lag zero ms.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ref</strong> &#8211; Spike times of the reference train. It is 
+assumed that the spike times are ordered sequentially.</li>
+<li><strong>comp</strong> &#8211; Spike times of the comparing train that shifts in time.
+It is assumed that the spike times are ordered sequentially.</li>
+<li><strong>window</strong> &#8211; Time window to say that two spikes are synchronized.
+This has a default value of 5.</li>
+<li><strong>dt</strong> &#8211; The binwidth.</li>
+<li><strong>timewindow</strong> &#8211; Correlogram range between [-timewindow, timewindow].</li>
+<li><strong>normalize</strong> &#8211; If True, values are normalized by the rate expected by
+chance at each lag, where chance is defined as 
+<tt class="docutils literal"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">frequency(comp)</span> <span class="pre">*</span> <span class="pre">window</span> <span class="pre">*</span> <span class="pre">len(ref)</span></tt>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A vector of length <tt class="docutils literal"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">2*timewindow/dt</span></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.filter">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">filter</tt><big>(</big><em>spikes, kernel=[1.0], origin='center', window=None, dt=1</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolve a 1D spike train with a kernel and return the resulting vector. This is
+useful for blurring or otherwise smearing spike times with a particular
+function, like a gaussian, a linear decay.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spikes</strong> &#8211; A 1D python list or numpy array of spike times.</li>
+<li><strong>kernel</strong> &#8211; A 1D python list or numpy array of filter values. Care might need
+to be taken to ensure that this sums to 1 to keep the magnitude the same.
+By default this is [1.0], which means that the output is a copy of the input.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="kernel.html#module-neuronpy.math.kernel" title="neuronpy.math.kernel"><tt class="xref py py-mod docutils literal"><span class="pre">neuronpy.math.kernel</span></tt></a></p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>origin</strong> &#8211; can be a string or an integer.:</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><em>integer</em>
+is an integer to specify the offset of the kernel
+applied in the convolution. This needs to be between 0 and
+the length of the kernel - 1. By default, this is 0 and therefore
+centers the kernel. A negative value shifts the kernel to the 
+right and a positive value shifts the kernel to the left.</li>
+<li><em>string</em>
+Can be &#8216;left&#8217;, &#8216;center&#8217;, or &#8216;right&#8217;</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>window</strong> &#8211; A tuple, (lo, hi), specifying a subset in time if the complete
+spikes are not used. The default value of <tt class="docutils literal"><span class="pre">None</span></tt> uses the complete spikes.</li>
+<li><strong>dt</strong> &#8211; Is the time bin to discretize by. Default is 1.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A 1D vector of the filtered spikes.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.filter_correlogram">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">filter_correlogram</tt><big>(</big><em>train_a</em>, <em>train_b=None</em>, <em>kernel=None</em>, <em>origin=None</em>, <em>dt=1.0</em>, <em>shift=None</em>, <em>window=None</em>, <em>mode='same'</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#filter_correlogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.filter_correlogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a cross-correlation between two spike trains after filtering them
+to be continuous time domain vectors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>train_a</strong> &#8211; List of spike times in one train.</li>
+<li><strong>train_b</strong> &#8211; List of spike times in another train. Default is <tt class="docutils literal"><span class="pre">None</span></tt>, which
+means that autocorrelation is performed on <tt class="docutils literal"><span class="pre">train_a</span></tt>.</li>
+<li><strong>kernel</strong> &#8211; Is the 1D filter that is applied to the two trains before they 
+are correlated. By default, this is <tt class="docutils literal"><span class="pre">None</span></tt>, which has no filtering 
+effect.</li>
+<li><strong>origin</strong> &#8211; Offset for the filter. .. seealso:: <a class="reference internal" href="#neuronpy.util.spiketrain.filter" title="neuronpy.util.spiketrain.filter"><tt class="xref py py-func docutils literal"><span class="pre">filter()</span></tt></a>.</li>
+<li><strong>dt</strong> &#8211; Timestep interval for spike trains to be filtered to.</li>
+<li><strong>shift</strong> &#8211; Maximum time shift of the correlogram. By default, this is
+<tt class="docutils literal"><span class="pre">None</span></tt>, which means that the trains are convolved using numpy&#8217;s 
+correlation function,
+<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html">http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html</a>.
+If specified, then the convolution is performed across the sliding window
+from <tt class="docutils literal"><span class="pre">[-shift,</span> <span class="pre">shift]</span></tt>.</li>
+<li><strong>window</strong> &#8211; Evaluate spikes within a time window. By default, this is 
+<tt class="docutils literal"><span class="pre">None</span></tt>, which means that both full trains are evaluated. In this case,
+the first and last spike times of the trains are padded with the
+kernel used. Otherwise, this is a 2-element list.</li>
+<li><strong>mode</strong> &#8211; Mode for numpy&#8217;s correlation function,
+<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html">http://docs.scipy.org/doc/numpy/reference/generated/numpy.correlate.html</a>.
+If <em>shift</em> is specified, this parameter is ignored.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Tuple <em>(raw_val, norm_factor, expected_val)</em> where
+<em>raw_val</em> is a scalar if <tt class="docutils literal"><span class="pre">mode='valid'</span></tt> or a vector if
+<em>mode</em> is a different value.
+<em>norm_factor</em> the value (scalar) of train_a correlated with 
+itself.
+<em>expected_vaL</em> the value (scalar) of the mean of each correlated with 
+itself.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_flattened">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_flattened</tt><big>(</big><em>spikes</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_flattened"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_flattened" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project the spike times from a 2d spike map to an ordered list in one
+dimension. This is similar to numpy&#8217;s flatten() method, but numpy requires
+a rectangular matrix. In our case, each row of the spikes array can have
+a variable number of spike times, and even be empty.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_frequency">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_frequency</tt><big>(</big><em>train</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the mean frequency of a spike train. Assumes time is in ms.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_histogram">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_histogram</tt><big>(</big><em>spikes</em>, <em>window=None</em>, <em>dt=1</em>, <em>bins=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the histogram of one or more spike trains. This is a means of quantizing 1D spikes
+as well.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>spikes</strong> &#8211; A 1D python list, or 1D or 2D numpy array of spike times.</li>
+<li><strong>window</strong> &#8211; A tuple, (lo, hi), specifying a subset in time if the complete
+spikes are not used. The default value of <tt class="docutils literal"><span class="pre">None</span></tt> uses the complete spikes.</li>
+<li><strong>dt</strong> &#8211; Is the time bin to discretize by. Default is 1.</li>
+<li><strong>bins</strong> &#8211; A numpy array specifying the histogram edges. Default is <tt class="docutils literal"><span class="pre">None</span></tt>. If
+bins is specified, then it ignores window and dt.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tuple of the form (discrete, bin_edges).</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html">http://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html</a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_isi_vec">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_isi_vec</tt><big>(</big><em>spikes</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_isi_vec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_isi_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an ordered list of spike times, return its interspike interval 
+vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>train</strong> &#8211; 1D list or numpy array of spike times</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A 1D vector of length len(spikes)-1 of the time differences in spikes.</td>
+</tr>
+</tbody>
+</table>
+<p>numpy.diff</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_mean_isi">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_mean_isi</tt><big>(</big><em>train</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_mean_isi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_mean_isi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the mean interspike interval of a given spike train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>train</strong> &#8211; 1D list or numpy array of spike times</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Mean interspike interval.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_median_isi">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_median_isi</tt><big>(</big><em>train</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_median_isi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_median_isi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the median interspike interval of a given spike train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>train</strong> &#8211; 1D list or numpy array of spike times</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Median interspike interval.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_permuted_train">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_permuted_train</tt><big>(</big><em>train</em>, <em>num_copies=1</em>, <em>smear=False</em>, <em>seed=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_permuted_train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_permuted_train" title="Permalink to this definition">¶</a></dt>
+<dd><p>With a given spike train, capture its interspike intervals and permute
+them into a new spike train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>train</strong> &#8211; is the spike train to permute. It is unaffected.</li>
+<li><strong>num_copies</strong> &#8211; is the number of times the spike train is permutted. 
+The default value of 1 returns a permutted vector the same length as
+the original train. A value of 2 would return a vector twice the
+length.</li>
+<li><strong>smear</strong> &#8211; When True, this adds a random time in the range 
+[-mean_isi/2., mean_isi/2] to appending trains. Default is False.</li>
+<li><strong>seed</strong> &#8211; is the seed for the random generator. Default is None, which
+then uses the system time.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_phase_correlation">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_phase_correlation</tt><big>(</big><em>reference_train</em>, <em>sliding_train</em>, <em>window=5</em>, <em>sliding_intervals=13</em>, <em>isi=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_phase_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_phase_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of corresponding spikes within some time window between
+two trains across a number of time-shifted trials.</p>
+<p>The number of correlated spikes between two trains that are within some 
+time constant of each other is simply the fraction:</p>
+<div class="math">
+<p><img src="_images/math/8c51db5089edc7e7e84420960969532a7a55e7c3.png" alt="\phi_{0} = \frac{\small{\textrm{
+number of correlated spikes within a time window}}}{\small{\textrm{
+total number of spikes in both trains.}}}"/></p>
+</div><p>where <img class="math" src="_images/math/38716b51d14d196bb0540dbf9c697f3c0396a530.png" alt="\phi_{0}"/> is the fraction with no delay between the trains.
+To determine the correlation at some arbitrary delay, <img class="math" src="_images/math/1dc1c0119a604b91be9142370dc3159b6a9bbcb9.png" alt="\tau"/>, we
+can re-write the equation as:</p>
+<div class="math">
+<p><img src="_images/math/d24627ba10008ec9ca16c036822aeb9cfc8948e2.png" alt="\phi_{\tau} = \frac{\small{\textrm{
+number of correlated spikes within a time window}}}{\small{\textrm{
+total number of spikes in both trains.}}}"/></p>
+</div><p>where <img class="math" src="_images/math/1dc1c0119a604b91be9142370dc3159b6a9bbcb9.png" alt="\tau"/> is the time one train is shifted relative to the 
+reference train.</p>
+<p>When the trains are spiking fairly regularly and oscillating around a
+particular frequency, it is useful to vary <img class="math" src="_images/math/1dc1c0119a604b91be9142370dc3159b6a9bbcb9.png" alt="\tau"/> over the interval</p>
+<div class="math">
+<p><img src="_images/math/47e27d27a0698eb1633c895dfeefaf75a94e1fd4.png" alt="\tau=\left[\frac{-median\_isi}{2},  \frac{median\_isi}{2}\right]"/></p>
+</div><p>where <tt class="docutils literal"><span class="pre">median_isi</span></tt> is the median interspike interval of the reference 
+train. This permits a measure of the relative phase of one spike train 
+over the other. As <img class="math" src="_images/math/1dc1c0119a604b91be9142370dc3159b6a9bbcb9.png" alt="\tau"/> varies over this interval, the individual 
+values of <img class="math" src="_images/math/541f02254766ffb1100e463cf5cc48b4c5d720a1.png" alt="\phi_{\tau}"/> can be stored in a vector, <img class="math" src="_images/math/b85bbfb165b853d6f5f9734be4cdabbb453f4e43.png" alt="\Phi"/>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>reference_train</strong> &#8211; Spike times of the reference train. It is 
+assumed that the spike times are ordered sequentially.</li>
+<li><strong>sliding_train</strong> &#8211; Spike times of the train that shifts in time.
+It is assumed that the spike times are ordered sequentially.</li>
+<li><strong>window</strong> &#8211; Time window to say that two spikes are synchronized.
+This has a default value of 5.</li>
+<li><strong>sliding_intervals</strong> &#8211; Number of iterations to perform, sliding
+<tt class="docutils literal"><span class="pre">sliding_train</span></tt> from [-1/2, 1/2] the median of <tt class="docutils literal"><span class="pre">reference_train</span></tt>&#8216;s
+interspike interval. This should be an odd number to ensure a 
+precise sample about 0 delay.</li>
+<li><strong>isi</strong> &#8211; If specified, this value will override the median interspike
+interval of the reference train.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>The following values:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">relative_sync</span></tt>, which is the value of the number of </dt>
+<dd><p class="first last">correlated spikes with no delay offset between the spike 
+train, divided by the mean of the <img class="math" src="_images/math/b85bbfb165b853d6f5f9734be4cdabbb453f4e43.png" alt="\Phi"/>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">phi_0</span></tt>, which is the number of correlated spikes within the </dt>
+<dd><p class="first last">time window divided by the total number of spikes in both 
+trains.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">mu</span></tt>, the mean of the <img class="math" src="_images/math/b85bbfb165b853d6f5f9734be4cdabbb453f4e43.png" alt="\Phi"/> vector.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">phi_vec</span></tt>, the <img class="math" src="_images/math/b85bbfb165b853d6f5f9734be4cdabbb453f4e43.png" alt="\Phi"/> vector.</p>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#neuronpy.util.spiketrain.coincidence_factor_phase" title="neuronpy.util.spiketrain.coincidence_factor_phase"><tt class="xref py py-func docutils literal"><span class="pre">coincidence_factor_phase()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_spike_bounds">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_spike_bounds</tt><big>(</big><em>spikes</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_spike_bounds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_spike_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a 2D array of spike data, retrieve the minimum and maximum spike 
+times.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_spikes">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_spikes</tt><big>(</big><em>data</em>, <em>idx=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_spikes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_spikes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the spikes from the cell with this idx within a time window.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; is the spike data. This should be a 2D array or
+a set or dict where the spikes from a given cell can be
+accessed as data[idx]. The spikes also need to be sorted
+in time if window is specified.</li>
+<li><strong>idx</strong> &#8211; id(s) from <tt class="docutils literal"><span class="pre">data</span></tt> to extract. If blank, then this will 
+retrieve the spikes of <tt class="docutils literal"><span class="pre">0</span></tt>. If an integer, it will return
+the spikes of that index. If a list of integers, then it will
+return those spikes in the list.</li>
+<li><strong>window</strong> &#8211; A tuple, (lo, hi), specifying the window range of 
+values to return.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">If idx is a scalar, then this will return the spikes
+associated with one cell. If idx is a list of indices, then
+a dict of lists will be returned.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_sync_masks">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_sync_masks</tt><big>(</big><em>train_a</em>, <em>train_b</em>, <em>window=5</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_sync_masks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_sync_masks" title="Permalink to this definition">¶</a></dt>
+<dd><p>For two spike trains, return the mask of those spikes that
+are within some time window of co-occurrence in the other train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>train_a</strong> &#8211; A list of spike times.</li>
+<li><strong>train_b</strong> &#8211; Another list of spike times.</li>
+<li><strong>window</strong> &#8211; Time window +/- about a given spike in one train to look
+for a co-occuring spike in the other train.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two vectors of <tt class="docutils literal"><span class="pre">len(train_a)</span></tt> and <tt class="docutils literal"><span class="pre">len(train_b)</span></tt> where a
+zero indicates that a spike does not co-occur in the other train, and
+1 indicates that a spike co-occurs in the other train within 
+<tt class="docutils literal"><span class="pre">window</span></tt> time.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.get_sync_traits">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">get_sync_traits</tt><big>(</big><em>train_a</em>, <em>train_b</em>, <em>window=5</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#get_sync_traits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.get_sync_traits" title="Permalink to this definition">¶</a></dt>
+<dd><p>For two spike trains, get their masks where they have spikes that occur
+within <tt class="docutils literal"><span class="pre">window</span></tt> time of each other and the ratio of correlated vs. 
+total spikes in both trains.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>train_a</strong> &#8211; List of spike times in one train.</li>
+<li><strong>train_b</strong> &#8211; List of spike times in another train.</li>
+<li><strong>window</strong> &#8211; Time window to search for correlated inputs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">mask_a, mask_b, ratio &#8211; the correlated masks and the ratio of
+correlated vs. total spikes in both trains.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.netconvecs_to_dict">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">netconvecs_to_dict</tt><big>(</big><em>t_vec</em>, <em>id_vec</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#netconvecs_to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.netconvecs_to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert data from NetCon.record(tvec, idvec) vectors into a dict
+where the keys of the dict are the ids and the value is a list of
+timestamps associated with that id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tvec</strong> &#8211; Timestamp vector.</li>
+<li><strong>idvec</strong> &#8211; Associated ids of each timestamp.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># nclist is a list of NetCons</span>
+<span class="n">t_vec</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">Vector</span><span class="p">()</span>
+<span class="n">id_vec</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">Vector</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nclist</span><span class="p">)):</span>
+    <span class="n">nclist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+<span class="n">simulate</span><span class="p">()</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The data in a dict where the key is the cell id
+and the list of spike times is the data associated with the cell.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.netconvecs_to_listoflists">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">netconvecs_to_listoflists</tt><big>(</big><em>t_vec</em>, <em>id_vec</em>, <em>minmax=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#netconvecs_to_listoflists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.netconvecs_to_listoflists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert data from NetCon.record(tvec, idvec) vectors into a dict
+where the keys of the dict are the ids and the value is a list of
+timestamps associated with that id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>tvec</strong> &#8211; Timestamp vector.</li>
+<li><strong>idvec</strong> &#8211; Associated ids of each timestamp.</li>
+<li><strong>min</strong> &#8211; If specified as a tuple, then the full range of values
+will between (min, max) will be inserted as empty lists
+if they are not present in id_vec.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># nclist is a list of NetCons</span>
+<span class="n">t_vec</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">Vector</span><span class="p">()</span>
+<span class="n">id_vec</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">Vector</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nclist</span><span class="p">)):</span>
+    <span class="n">nclist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">id_vec</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+<span class="n">simulate</span><span class="p">()</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The data as a list of lists with each row being the spike
+times.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.permute_vec">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">permute_vec</tt><big>(</big><em>vec</em>, <em>seed=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#permute_vec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.permute_vec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Permute a 1D array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>vec</strong> &#8211; The vector to permute.</li>
+<li><strong>seed</strong> &#8211; The seed for the random number generator. Default is None, which
+uses the system time.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A permuted copy of vec.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.poisson_train">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">poisson_train</tt><big>(</big><em>frequency</em>, <em>duration</em>, <em>start_time=0</em>, <em>seed=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#poisson_train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.poisson_train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator function for a Homogeneous Poisson train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>frequency</strong> &#8211; The mean spiking frequency.</li>
+<li><strong>duration</strong> &#8211; Maximum duration.</li>
+<li><strong>start_time</strong> &#8211; Timestamp.</li>
+<li><strong>seed</strong> &#8211; Seed for the random number generator. If None, this will be
+decided by numpy, which chooses the system time.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A relative spike time from t=start_time, in seconds (not ms).</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>EXAMPLE:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Make a list of spikes at 20 Hz for 3 seconds</span>
+<span class="n">spikes</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">poisson_train</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>EXAMPLE:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Use dynamically in a program</span>
+<span class="c"># Care needs to be taken with this scenario because the generator will</span>
+<span class="c"># generate spikes until the program or spike_gen object is terminated.</span>
+<span class="n">spike_gen</span> <span class="o">=</span> <span class="n">poisson_train</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">float_info</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+<span class="n">spike</span> <span class="o">=</span> <span class="n">spike_gen</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+<span class="c"># Process the spike, to other programmatic things</span>
+<span class="n">spike</span> <span class="o">=</span> <span class="n">spike_gen</span><span class="o">.</span><span class="n">next</span><span class="p">()</span> <span class="c"># Get another spike</span>
+<span class="c"># etc.</span>
+<span class="c"># Terminate the program.</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.print_spikes">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">print_spikes</tt><big>(</big><em>data</em>, <em>idx=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#print_spikes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.print_spikes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the spike times of cell <tt class="docutils literal"><span class="pre">idx</span></tt> within interval <tt class="docutils literal"><span class="pre">window</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> &#8211; This should be a 2D array or
+a set or dict where the spikes from a given cell can be
+accessed as data[idx]. The spikes also need to be sorted
+if <tt class="docutils literal"><span class="pre">window</span></tt> is specified.</li>
+<li><strong>idx</strong> &#8211; id(s) from <tt class="docutils literal"><span class="pre">data</span></tt> to extract. If blank, then this will 
+retrieve the spikes of <tt class="docutils literal"><span class="pre">0</span></tt>. If an integer, it will return
+the spikes of that index. If a list of integers, then it will
+return those spikes in the list.</li>
+<li><strong>window</strong> &#8211; A tuple, (lo, hi), specifying the window range of 
+values to return.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.read_file">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">read_file</tt><big>(</big><em>file_name</em>, <em>spike_ids=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#read_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.read_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the spike data formatted from NEURON where each line is a timestamp
+of spike followed by a cell (or other spike generator) id that gave the
+spike.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_name</strong> &#8211; Name of the spike file to read.</li>
+<li><strong>spike_ids</strong> &#8211; If specified, a subset of ids to load. This should be a
+sorted-ascending list.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The data in a dict where the key is the cell id
+and the list of spike times is the data associated with the cell.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.read_file_to_vector">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">read_file_to_vector</tt><big>(</big><em>file_name</em>, <em>spike_ids=None</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#read_file_to_vector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.read_file_to_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the spike data formatted from NEURON where each line is a timestamp
+of spike followed by a cell (or other spike generator) id that gave the
+spike.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>file_name</strong> &#8211; Name of the spike file to read.</li>
+<li><strong>spike_ids</strong> &#8211; If specified, a subset of ids to load. This should be an
+sorted-ascending list.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The data in a vector of tuples of the format (time, gid).</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.subset_file">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">subset_file</tt><big>(</big><em>file_name</em>, <em>out_file_name</em>, <em>spike_ids</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#subset_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.subset_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the spike data formatted from NEURON where each line is a timestamp
+of a spike followed by a cell (or other spike generator) id that gave the
+spike. Echo a new file in the same format, but only of those spike_ids
+specified in the <tt class="docutils literal"><span class="pre">spike_ids</span></tt> list.
+:param file_name: Input file to read.
+:param out_file_name: Output file to write.
+:param spike_ids: List of spike ids to write out.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.util.spiketrain.validate_kernel_and_origin">
+<tt class="descclassname">neuronpy.util.spiketrain.</tt><tt class="descname">validate_kernel_and_origin</tt><big>(</big><em>kernel</em>, <em>origin</em><big>)</big><a class="reference internal" href="_modules/neuronpy/util/spiketrain.html#validate_kernel_and_origin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.util.spiketrain.validate_kernel_and_origin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Confirm that the origin for this kernel is valid. Raise an exception if not.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>origin</strong> &#8211; can be a string or an integer.:</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><em>integer</em>
+is an integer to specify the offset of the kernel
+applied in the convolution. This needs to be between 0 and
+the length of the kernel - 1. By default, this is 0 and therefore
+centers the kernel. A negative value shifts the kernel to the 
+right and a positive value shifts the kernel to the left.</li>
+<li><em>string</em>
+Can be &#8216;left&#8217;, &#8216;center&#8217;, or &#8216;right&#8217;</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a valid integer if a string was used.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="platforminfo.html"
+                        title="previous chapter">platforminfo</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="timeseries.html"
+                        title="next chapter">timeseries</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/spiketrain.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="timeseries.html" title="timeseries"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="platforminfo.html" title="platforminfo"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="util.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

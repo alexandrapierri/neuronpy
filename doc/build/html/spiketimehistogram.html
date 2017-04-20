@@ -1,0 +1,187 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SpikeTimeHistogram &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Graphics" href="graphics.html" />
+    <link rel="next" title="Math" href="math.html" />
+    <link rel="prev" title="SpikeSum" href="spikesum.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="math.html" title="Math"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="spikesum.html" title="SpikeSum"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="graphics.html" accesskey="U">Graphics</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="spiketimehistogram">
+<h1>SpikeTimeHistogram<a class="headerlink" href="#spiketimehistogram" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.graphics.spiketimehistogram"></span><p>Spike time histogram of spike train data.</p>
+<p>This class works with 
+<a class="reference internal" href="spikeparams.html#neuronpy.graphics.spikeparams.SpikeParams" title="neuronpy.graphics.spikeparams.SpikeParams"><tt class="xref py py-class docutils literal"><span class="pre">SpikeParams</span></tt></a> and
+<a class="reference internal" href="spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot" title="neuronpy.graphics.spikeplot.SpikePlot"><tt class="xref py py-class docutils literal"><span class="pre">SpikePlot</span></tt></a> to place a histogram
+of spikes under a raster plot (or by itself if the spike raster plot is
+not shown).</p>
+<p>For detailed examples, see</p>
+<p>EXAMPLES:</p>
+<p>This example generates some random &#8220;spikes&#8221; and displays them.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">neuronpy.graphics</span> <span class="kn">import</span> <span class="n">spikeplot</span>
+
+<span class="n">spikes</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">num_cells</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">num_spikes_per_cell</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">frequency</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="c"># Make the spike data. Use a simple Poisson-like spike generator </span>
+<span class="c"># (just for illustrative purposes here. Better spike generators should </span>
+<span class="c"># be used in simulations).</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_cells</span><span class="p">):</span>
+    <span class="n">isi</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">num_spikes_per_cell</span><span class="p">)</span>
+    <span class="n">spikes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">isi</span><span class="p">))</span>
+    
+<span class="c"># spikes is now a list of lists where each cell has a list of spike</span>
+<span class="c"># times. Now, let&#39;s plot these spikes with the default parameters.</span>
+<span class="n">sp</span> <span class="o">=</span> <span class="n">spikeplot</span><span class="o">.</span><span class="n">SpikePlot</span><span class="p">(</span><span class="n">sth_ratio</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">savefig</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">sp</span><span class="o">.</span><span class="n">plot_spikes</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>AUTHORS:</p>
+<ul class="simple">
+<li>THOMAS MCTAVISH (2010-03-01): initial version, 0.1</li>
+<li>THOMAS MCTAVISH (2010-12-17): Moved non-graphic functionality to spiketrain.</li>
+</ul>
+<dl class="function">
+<dt id="neuronpy.graphics.spiketimehistogram.hist_filter">
+<tt class="descclassname">neuronpy.graphics.spiketimehistogram.</tt><tt class="descname">hist_filter</tt><big>(</big><em>iline, kernel=[1], origin=0</em><big>)</big><a class="reference internal" href="_modules/neuronpy/graphics/spiketimehistogram.html#hist_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.graphics.spiketimehistogram.hist_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolve the 1d input with the kernel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>iline</strong> &#8211; is the 1d input signal, the discretized histogram
+vector.</li>
+<li><strong>kernel</strong> &#8211; is the filter to be applied. This should be a 1d
+vector that sums to 1.0. By default this is [1], which means
+that the output is a copy of the input.</li>
+<li><strong>origin</strong> &#8211; is the offset for the filter. If the filter was
+a linear decay, this may need to be set to either the head or
+tail of the filter (i.e. the kernel&#8217;s length - 1).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>..note:</p>
+<div class="highlight-python"><pre>The time of the histogram bin that is filtered is the left edge and not
+the center of the bin.</pre>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="spikesum.html"
+                        title="previous chapter">SpikeSum</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="math.html"
+                        title="next chapter">Math</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/spiketimehistogram.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="math.html" title="Math"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="spikesum.html" title="SpikeSum"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="graphics.html" >Graphics</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

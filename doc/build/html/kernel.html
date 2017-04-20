@@ -1,0 +1,179 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kernel &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Math" href="math.html" />
+    <link rel="next" title="Neuron Objects" href="nrnobjects.html" />
+    <link rel="prev" title="Math" href="math.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="nrnobjects.html" title="Neuron Objects"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="math.html" title="Math"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="math.html" accesskey="U">Math</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="kernel">
+<h1>kernel<a class="headerlink" href="#kernel" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.math.kernel"></span><p>Kernel generating functions.</p>
+<p>AUTHORS:</p>
+<ul class="simple">
+<li>THOMAS MCTAVISH (2010-02-05): initial version</li>
+<li>THOMAS MCTAVISH (2011-01-12): Fixed bug where kernels did not normalize with dt.</li>
+</ul>
+<dl class="function">
+<dt id="neuronpy.math.kernel.gauss_1d">
+<tt class="descclassname">neuronpy.math.kernel.</tt><tt class="descname">gauss_1d</tt><big>(</big><em>sigma=1.0</em>, <em>dt=1.0</em>, <em>limit=0.01</em>, <em>normalize=True</em><big>)</big><a class="reference internal" href="_modules/neuronpy/math/kernel.html#gauss_1d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.math.kernel.gauss_1d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a Gaussian distribution that sums to 1 along 1 dimension, 
+quantized by discrete steps.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.math.kernel.rectangle_window">
+<tt class="descclassname">neuronpy.math.kernel.</tt><tt class="descname">rectangle_window</tt><big>(</big><em>window=0</em>, <em>dt=0.1</em>, <em>normalize=True</em><big>)</big><a class="reference internal" href="_modules/neuronpy/math/kernel.html#rectangle_window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.math.kernel.rectangle_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a rectangle (really a vector) that has a particular length.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>window</strong> &#8211; Length of the kernel, in ms. A value of zero (default), will
+still make a kernel of len == 1, corresponding to 1 time interval value,
+and filtering with such a kernel will yield the input.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A time window of 5 ms, say, will be different depending on the value
+of dt. If dt == 1, then the kernel will range from [-2,2] across 5 values.
+If dt == 0.1, then the kernel will range from [-2.5, 2.5] across 51 values.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuronpy.math.kernel.triangle">
+<tt class="descclassname">neuronpy.math.kernel.</tt><tt class="descname">triangle</tt><big>(</big><em>dt=0.1</em>, <em>normalize=True</em><big>)</big><a class="reference internal" href="_modules/neuronpy/math/kernel.html#triangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.math.kernel.triangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a ramp from 0 to 1 back to 0 again by dt.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dt</strong> &#8211; timestep interval. Kernel will be of length 2/dt - 1 with
+peak at 1/dt.</li>
+<li><strong>normalize</strong> &#8211; If True, the kernel sums to 1. Otherwise, each point
+on the ramp is quantized by an integer.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="math.html"
+                        title="previous chapter">Math</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="nrnobjects.html"
+                        title="next chapter">Neuron Objects</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/kernel.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="nrnobjects.html" title="Neuron Objects"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="math.html" title="Math"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="math.html" >Math</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

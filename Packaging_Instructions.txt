@@ -1,0 +1,12 @@
+To package for pypi,
+
+Edit the version in src/__init__.py
+Edit the version in doc/source/conf.py
+
+sudo python setup.py install
+cd doc
+make html
+make latexpdf
+python setup.py sdist --formats=gztar,zip
+
+Upload the documentation. First select all in doc/build/html, then zip into an archive. From NeuronPy package index at Pypi, browse and upload this file.

@@ -1,0 +1,486 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.graphics.spiketimehistogram &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.graphics.spiketimehistogram</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;Spike time histogram of spike train data.</span>
+
+<span class="sd">This class works with </span>
+<span class="sd">:class:`~neuronpy.graphics.spikeparams.SpikeParams` and</span>
+<span class="sd">:class:`~neuronpy.graphics.spikeplot.SpikePlot` to place a histogram</span>
+<span class="sd">of spikes under a raster plot (or by itself if the spike raster plot is</span>
+<span class="sd">not shown).</span>
+
+<span class="sd">For detailed examples, see</span>
+
+<span class="sd">EXAMPLES:</span>
+
+<span class="sd">This example generates some random &quot;spikes&quot; and displays them.</span>
+
+<span class="sd">::</span>
+
+<span class="sd">    import numpy</span>
+<span class="sd">    from neuronpy.graphics import spikeplot</span>
+
+<span class="sd">    spikes = []</span>
+<span class="sd">    num_cells = 10</span>
+<span class="sd">    num_spikes_per_cell = 20</span>
+<span class="sd">    frequency = 20</span>
+
+<span class="sd">    # Make the spike data. Use a simple Poisson-like spike generator </span>
+<span class="sd">    # (just for illustrative purposes here. Better spike generators should </span>
+<span class="sd">    # be used in simulations).</span>
+<span class="sd">    for i in range(num_cells):</span>
+<span class="sd">        isi=numpy.random.poisson(frequency, num_spikes_per_cell)</span>
+<span class="sd">        spikes.append(numpy.cumsum(isi))</span>
+<span class="sd">        </span>
+<span class="sd">    # spikes is now a list of lists where each cell has a list of spike</span>
+<span class="sd">    # times. Now, let&#39;s plot these spikes with the default parameters.</span>
+<span class="sd">    sp = spikeplot.SpikePlot(sth_ratio=0.3, savefig=True)</span>
+<span class="sd">    sp.plot_spikes(spikes)</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-03-01): initial version, 0.1</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-12-17): Moved non-graphic functionality to spiketrain.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_approx_equal</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span><span class="p">,</span> <span class="n">ticker</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">spiketrain</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">vartest</span>
+<span class="kn">from</span> <span class="nn">neuronpy.math</span> <span class="kn">import</span> <span class="n">kernel</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util.decorators</span> <span class="kn">import</span> <span class="n">set_overrides_and_defaults</span>
+
+<span class="k">class</span> <span class="nc">SpikeTimeHistogram</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike_plot</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span> <span class="o">=</span> <span class="n">spike_plot</span> <span class="c"># SpikePlot object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drawn_lines</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span> <span class="c"># axes drawn lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">redraw</span> <span class="o">=</span> <span class="bp">True</span>
+        
+        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;dt&#39;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">,</span> \
+                <span class="s">&#39;kernel&#39;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> \
+                <span class="s">&#39;origin&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span> \
+                <span class="s">&#39;style&#39;</span> <span class="p">:</span> <span class="s">&#39;bar&#39;</span><span class="p">,</span> \
+                <span class="s">&#39;bins&#39;</span> <span class="p">:</span> <span class="bp">None</span> <span class="p">}</span>
+                
+        <span class="n">set_overrides_and_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">set_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bins</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bins</span> <span class="o">=</span> <span class="n">bins</span>
+        
+    <span class="k">def</span> <span class="nf">set_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the axes of the SpikeTimeHistogram to the handle passed in.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="o">=</span> <span class="n">axes</span>
+        
+    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike_params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate and plot the histogram from the SpikeParams object</span>
+<span class="sd">        passed in.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c">#print &quot;sth axes is None&quot;</span>
+            <span class="n">fig</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        
+        <span class="n">spike_params</span><span class="o">.</span><span class="n">flattened</span> <span class="o">=</span> <span class="n">spiketrain</span><span class="o">.</span><span class="n">get_flattened</span><span class="p">(</span>\
+                <span class="n">spike_params</span><span class="o">.</span><span class="n">spikes</span><span class="p">)</span>
+            
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drawn_lines</span><span class="p">[</span><span class="n">spike_params</span><span class="o">.</span><span class="n">label</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c"># Ignore if not present</span>
+        
+        <span class="c"># Set the labels</span>
+<span class="c">#        self._axes.set_yticks([])</span>
+<span class="c">#        self._axes.set_frame_on(False)</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">())</span>
+        
+        <span class="c"># Update the data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_xlim</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">update_xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the xlim of the axes and recalculate the histogram.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+            
+        <span class="c"># Clear the axes and redraw everything</span>
+        <span class="c">#self._axes.cla()</span>
+    
+        <span class="c"># Set the x limits and labels.</span>
+        <span class="n">xlabels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">xlabels</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">xlim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+        
+        <span class="c"># Go through spike_param dict and draw those histograms.</span>
+        <span class="k">for</span> <span class="n">spike_param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_style</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_redraw</span><span class="p">:</span>
+                    <span class="n">spikes</span> <span class="o">=</span> <span class="n">spiketrain</span><span class="o">.</span><span class="n">get_spikes</span><span class="p">(</span>\
+                            <span class="p">[</span><span class="n">spike_param</span><span class="o">.</span><span class="n">flattened</span><span class="p">],</span> <span class="n">window</span><span class="o">=</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bins</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">bins</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_dt</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">bins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bins</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                        
+                    <span class="p">(</span><span class="n">discrete</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">)</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span> <span class="o">=</span> <span class="n">hist_filter</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">asfarray</span><span class="p">(</span><span class="n">discrete</span><span class="p">),</span> \
+                            <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_kernel</span><span class="p">,</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_origin</span><span class="p">)</span>
+                            
+                    <span class="n">bins</span> <span class="o">=</span> <span class="p">[]</span>
+
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">)):</span>
+                        <span class="n">bins</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span> <span class="o">*</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> \
+                                <span class="p">(</span><span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+                    <span class="n">spike_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">discrete</span><span class="p">)</span>
+                    <span class="n">rlen</span> <span class="o">=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">divisor</span> <span class="o">=</span> <span class="p">(</span><span class="n">spike_len</span> <span class="o">-</span> \
+                            <span class="p">((</span><span class="n">spike_len</span> <span class="o">*</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">)</span> <span class="o">%</span> \
+                            <span class="nb">float</span><span class="p">(</span><span class="n">rlen</span><span class="p">)</span> <span class="o">/</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1.1</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="ow">is</span> <span class="s">&#39;bar&#39;</span><span class="p">:</span>
+                        <span class="n">divisor</span> <span class="o">*=</span> <span class="mf">1.15</span>
+                    <span class="n">lwidth</span> <span class="o">=</span> <span class="mf">0.75</span>
+                    <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">divisor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+                        <span class="n">lwidth</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="n">divisor</span><span class="p">,</span> <span class="n">lwidth</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="ow">is</span> <span class="s">&#39;bar&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="ow">is</span> <span class="s">&#39;stepfilled&#39;</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_drawn_lines</span><span class="p">[</span><span class="n">spike_param</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> \
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">vlines</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">,</span> \
+                                        <span class="n">linewidth</span> <span class="o">=</span> <span class="n">lwidth</span><span class="p">)</span>
+
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="ow">is</span> <span class="s">&#39;step&#39;</span><span class="p">:</span>
+                        <span class="n">x_coords</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="n">y_coords</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">)):</span>
+                            <span class="n">xval</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+                                <span class="n">x_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xval</span><span class="p">)</span>
+                            <span class="n">x_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xval</span><span class="p">)</span>
+                            <span class="n">y_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                            <span class="n">y_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="n">xval</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">)</span> <span class="o">*</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">)</span> <span class="o">+</span> \
+                                <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">x_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xval</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_drawn_lines</span><span class="p">[</span><span class="n">spike_param</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> \
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">,</span> \
+                                        <span class="n">linewidth</span><span class="o">=</span><span class="n">spike_param</span><span class="o">.</span><span class="n">sth_linewidth</span><span class="p">,</span> \
+                                        <span class="n">color</span><span class="o">=</span><span class="n">spike_param</span><span class="o">.</span><span class="n">markercolor</span><span class="p">)</span>
+
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="ow">is</span> <span class="s">&#39;lineto&#39;</span><span class="p">:</span>
+                        <span class="n">x_coords</span> <span class="o">=</span> <span class="p">[]</span>                        
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">)):</span>
+                            <span class="n">xval</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">sth_dt</span><span class="p">)</span> <span class="o">+</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="n">x_coords</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xval</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_drawn_lines</span><span class="p">[</span><span class="n">spike_param</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> \
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filtered</span><span class="p">,</span> \
+                                        <span class="n">linewidth</span><span class="o">=</span><span class="n">spike_param</span><span class="o">.</span><span class="n">sth_linewidth</span><span class="p">,</span> \
+                                        <span class="n">color</span><span class="o">=</span><span class="n">spike_param</span><span class="o">.</span><span class="n">markercolor</span><span class="p">)</span>
+                            
+        <span class="c"># Turn off the x-axis tick labels, except the first and last one</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="s">&#39;out&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">width</span><span class="o">=.</span><span class="mi">75</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_spike_plot</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">LinearLocator</span><span class="p">(</span><span class="n">numticks</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s">&#39;none&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_yaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&#39;left&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&#39;bottom&#39;</span><span class="p">)</span>
+ 
+    <span class="k">def</span> <span class="nf">set_dt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the time window of each histogram bar.</span>
+<span class="sd">        :param dt: Width of the bar (integer or float).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">greater_than</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="s">&#39;dt&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span> <span class="o">=</span> <span class="n">dt</span>
+    
+    <span class="k">def</span> <span class="nf">set_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filter_kernel</span><span class="p">,</span> <span class="n">test_sum_to_one</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the filter kernel. The spike histogram can be further filtered</span>
+<span class="sd">        with this kernel. This may be useful in situations where the histogram</span>
+<span class="sd">        has a small time window (dt) and therefore many bins, which then get</span>
+<span class="sd">        filtered through this kernel. You will probably want to set the style</span>
+<span class="sd">        to ``&#39;lineto&#39;`` when filtering this way.</span>
+<span class="sd">        </span>
+<span class="sd">        EXAMPLE:</span>
+<span class="sd">        </span>
+<span class="sd">        Set the kernel to a gaussian.</span>
+<span class="sd">        </span>
+<span class="sd">        ::</span>
+<span class="sd">            </span>
+<span class="sd">            # Assumes a SpikePlot object, sp, has already been created.</span>
+<span class="sd">            from neuronpy.math import kernel</span>
+<span class="sd">            dt = 0.1</span>
+<span class="sd">            sth = sp.get_sth()</span>
+<span class="sd">            sth.set_dt(0.1)</span>
+<span class="sd">            k = kernel.gauss_1d(sigma=2., dt=dt)</span>
+<span class="sd">            sth.set_kernel(k)</span>
+<span class="sd">            sth.set_style(&#39;lineto&#39;)</span>
+<span class="sd">            </span>
+<span class="sd">        This example places</span>
+<span class="sd">        </span>
+<span class="sd">        :param kernel: is a 1d vector that should sum to 1.0 to keep the overall</span>
+<span class="sd">            magnitude of the histogram the same.</span>
+<span class="sd">        :param test_sum_to_one: is a boolean to test that the kernel indeed</span>
+<span class="sd">            sums to 1.0. The default is True.</span>
+<span class="sd">        :param decimals: is the resolution of the kernel summing to 1. Default</span>
+<span class="sd">            is 2, meaning that the sum has to be 0.99 &lt; sum &lt; 1.01 to be valid.</span>
+<span class="sd">            This is ignored if test_sum_to_one is false.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">test_sum_to_one</span><span class="p">:</span>
+            <span class="n">assert_approx_equal</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">filter_kernel</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">decimals</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kernel</span> <span class="o">=</span> <span class="n">filter_kernel</span>
+        
+    <span class="k">def</span> <span class="nf">set_origin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the origin of the filter.</span>
+<span class="sd">        </span>
+<span class="sd">        :param origin: can be a string or an integer.:</span>
+<span class="sd">            - *integer*</span>
+<span class="sd">              is an integer to specify the offset of the kernel</span>
+<span class="sd">              applied in the convolution. This needs to be between 0 and</span>
+<span class="sd">              the length of the kernel - 1. By default, this is 0 and therefore</span>
+<span class="sd">              centers the kernel. A negative value shifts the kernel to the </span>
+<span class="sd">              right and a positive value shifts the kernel to the left.</span>
+<span class="sd">            - *string*</span>
+<span class="sd">              Can be &#39;left&#39;, &#39;center&#39;, or &#39;right&#39;</span>
+<span class="sd">              </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;center&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">]</span>
+            <span class="n">vartest</span><span class="o">.</span><span class="n">inlist</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="n">valid</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+            <span class="n">lenk</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_kernel</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">origin</span><span class="o">==</span><span class="s">&#39;left&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_origin</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">origin</span><span class="o">==</span><span class="s">&#39;right&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_origin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_origin</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">return</span>
+            
+        <span class="n">vartest</span><span class="o">.</span><span class="n">isint</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_origin</span> <span class="o">=</span> <span class="n">origin</span>
+        
+    <span class="k">def</span> <span class="nf">set_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the style of the histogram bars.</span>
+<span class="sd">        :param style: May be one of the following:</span>
+<span class="sd">            - ``&#39;bar&#39;``</span>
+<span class="sd">              Makes a solid bar from zero to the bin height (default).</span>
+<span class="sd">            - ``&#39;stepfilled&#39;``</span>
+<span class="sd">              Similar to ``&#39;bar&#39;``, but leaves no whitespace between the bars.</span>
+<span class="sd">            - ``&#39;step&#39;``</span>
+<span class="sd">              Draws an outline of the bars. This is especially useful if</span>
+<span class="sd">              drawing multiple histograms.</span>
+<span class="sd">            - ``&#39;lineto&#39;``</span>
+<span class="sd">              Draws a line between the (x=bin loc, y=bin height). The difference</span>
+<span class="sd">              with &#39;step&#39; is that &#39;step&#39; draws a horizontal edge across the bin.</span>
+<span class="sd">              This one draws a line from bin to bin. This is especially useful</span>
+<span class="sd">              when filtering.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;bar&#39;</span><span class="p">,</span> <span class="s">&#39;step&#39;</span><span class="p">,</span> <span class="s">&#39;stepfilled&#39;</span><span class="p">,</span> <span class="s">&#39;lineto&#39;</span><span class="p">]</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">inlist</span><span class="p">(</span><span class="n">style</span><span class="p">,</span> <span class="n">valid</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="o">=</span> <span class="n">style</span>
+            
+    <span class="k">def</span> <span class="nf">filter_gaussian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the kernel to be a gaussian kernel.</span>
+<span class="sd">        </span>
+<span class="sd">        :param sigma: is the standard deviation of the Gaussian distribution.</span>
+<span class="sd">        </span>
+<span class="sd">        :param limit: is the threshold for the height of the tail in the</span>
+<span class="sd">            distribution. Because a Gaussian is infinite, this limits the </span>
+<span class="sd">            kernel&#39;s length. This value is in a normalized distribution where</span>
+<span class="sd">            the peak of the bell curve is at 1.0. The default value of 0.01</span>
+<span class="sd">            is therefore over 4 standard deviations away.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_kernel</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">gauss_1d</span><span class="p">(</span><span class="n">sigma</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">_dt</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">))</span>
+        
+<span class="c">#def quantize(spikes, timestep, window):</span>
+<span class="c">#    &quot;&quot;&quot;</span>
+<span class="c">#    Aggregate the spike times to one time vector, quantized by dt, </span>
+<span class="c">#    in the bounded window.</span>
+<span class="c">#    </span>
+<span class="c">#    :param spikes: is the sorted, 1d vector of spike times.</span>
+<span class="c">#    </span>
+<span class="c">#    :param timestep: is the timestep or width of the bin in time.</span>
+<span class="c">#    </span>
+<span class="c">#    :param window: is a tuple of length 2 defining the minimum and</span>
+<span class="c">#        maximum times of the window.</span>
+<span class="c">#    &quot;&quot;&quot;</span>
+<span class="c">#    # We build a new zero-vector that adds 1 to each timestep</span>
+<span class="c">#    # where there is a spike. Start by converting the spikes</span>
+<span class="c">#    # into index values. We store these values in a vector,</span>
+<span class="c">#    # which we will iterate over.</span>
+<span class="c">#    </span>
+<span class="c">#    # Subtract the offset so that the first spike is the zeroth idx.</span>
+<span class="c">#    idx_vec = numpy.add(spikes, -window[0])</span>
+<span class="c">#    </span>
+<span class="c">#    # Divide those numbers by dt to make index values.</span>
+<span class="c">#    idx_vec = numpy.divide(idx_vec, timestep)</span>
+<span class="c">#    </span>
+<span class="c">#    # Round those numbers to the nearest integer</span>
+<span class="c">#    idx_vec = numpy.floor(idx_vec)</span>
+<span class="c">#    </span>
+<span class="c">#    # Create a vector of zeros that is the length of the SpikePlot</span>
+<span class="c">#    # data divided by our timestep.</span>
+<span class="c">#    #print &quot;aggregate() xlim=&quot;,self._spike_plot._axes_lim</span>
+<span class="c">#    num_discrete = numpy.ceil(</span>
+<span class="c">#    float(window[1] - window[0]-1) / float(timestep))</span>
+<span class="c">#    #print &quot;num_discrete=&quot;,num_discrete</span>
+<span class="c">#    discrete_vec = numpy.zeros(num_discrete)</span>
+<span class="c">#    </span>
+<span class="c">#    # Go through and add 1 at the appropriate index</span>
+<span class="c">#    for idx in idx_vec:</span>
+<span class="c">#        try:</span>
+<span class="c">#            discrete_vec[idx] += 1</span>
+<span class="c">#        except IndexError:</span>
+<span class="c">#            print &quot;idx=&quot;, idx</span>
+<span class="c">#            </span>
+<span class="c">#    return discrete_vec</span>
+  
+<div class="viewcode-block" id="hist_filter"><a class="viewcode-back" href="../../../spiketimehistogram.html#neuronpy.graphics.spiketimehistogram.hist_filter">[docs]</a><span class="k">def</span> <span class="nf">hist_filter</span><span class="p">(</span><span class="n">iline</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">origin</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convolve the 1d input with the kernel.</span>
+<span class="sd">    </span>
+<span class="sd">    :param iline: is the 1d input signal, the discretized histogram</span>
+<span class="sd">        vector.</span>
+<span class="sd">        </span>
+<span class="sd">    :param kernel: is the filter to be applied. This should be a 1d</span>
+<span class="sd">        vector that sums to 1.0. By default this is [1], which means</span>
+<span class="sd">        that the output is a copy of the input.</span>
+<span class="sd">        </span>
+<span class="sd">    :param origin: is the offset for the filter. If the filter was</span>
+<span class="sd">        a linear decay, this may need to be set to either the head or</span>
+<span class="sd">        tail of the filter (i.e. the kernel&#39;s length - 1).</span>
+<span class="sd">        </span>
+<span class="sd">    ..note::</span>
+<span class="sd">        </span>
+<span class="sd">        The time of the histogram bin that is filtered is the left edge and not</span>
+<span class="sd">        the center of the bin.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">isint</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+    <span class="n">lenk</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kernel</span><span class="p">)</span>
+    <span class="nb">min</span> <span class="o">=</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lenk</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))</span>
+    <span class="nb">max</span> <span class="o">=</span> <span class="o">-</span><span class="nb">min</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">vartest</span><span class="o">.</span><span class="n">inrange</span><span class="p">(</span><span class="n">origin</span><span class="p">,</span> <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">convolve1d</span><span class="p">(</span><span class="n">iline</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">origin</span><span class="p">,</span> \
+            <span class="n">mode</span><span class="o">=</span><span class="s">&#39;constant&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

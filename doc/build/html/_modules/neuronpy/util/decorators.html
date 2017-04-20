@@ -1,0 +1,203 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.decorators &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.decorators</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Decorator and helper routines.</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-12-01): initial version, 0.1</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<div class="viewcode-block" id="set_overrides_and_defaults"><a class="viewcode-back" href="../../../decorators.html#neuronpy.util.decorators.set_overrides_and_defaults">[docs]</a><span class="k">def</span> <span class="nf">set_overrides_and_defaults</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;For a class that has ``&#39;set_&lt;var&gt;()&#39;`` accessor routines for its variables, this </span>
+<span class="sd">    function should be  called in  __init__ to set any kwarg overrides and then set </span>
+<span class="sd">    remaining default parameters by calling the appropriate ``&#39;set_&lt;var&gt;()&#39;`` function. </span>
+<span class="sd">    To use, simply place default values in a dict and pass it wih the kwargs.</span>
+<span class="sd">    </span>
+<span class="sd">    EXAMPLE:</span>
+<span class="sd">        </span>
+<span class="sd">    The following example shows general use.</span>
+<span class="sd">    </span>
+<span class="sd">    ::</span>
+<span class="sd">        </span>
+<span class="sd">        from neuronpy.util.decorators import set_overrides_and_defaults</span>
+
+<span class="sd">        class MyClass(object):</span>
+<span class="sd">            def __init__(self, **kwargs):</span>
+<span class="sd">                defaults = {&#39;var1&#39;:None, \</span>
+<span class="sd">                        &#39;var2&#39;:&#39;spikeplot.png&#39;}</span>
+<span class="sd">                set_overrides_and_defaults(self, defaults, kwargs)</span>
+<span class="sd">                    </span>
+<span class="sd">            def set_var1(self, val):</span>
+<span class="sd">                # Do some tests to make sure val is appropriate, and then set</span>
+<span class="sd">                self._var1 = val</span>
+<span class="sd">                </span>
+<span class="sd">            def set_var2(self, val):</span>
+<span class="sd">                # Do some tests to make sure val is appropriate, and then set</span>
+<span class="sd">                self._var2 = val</span>
+<span class="sd">                </span>
+<span class="sd">        mc = MyClass()</span>
+<span class="sd">        print &quot;mc._var1 =&quot;, mc._var1, &quot;mc._var2=&quot;, mc._var2</span>
+<span class="sd">        </span>
+<span class="sd">    This will give the following output::</span>
+<span class="sd">        </span>
+<span class="sd">        mc._var1 = None mc._var2= spikeplot.png</span>
+<span class="sd">        </span>
+<span class="sd">    We can override individual variables::</span>
+<span class="sd">        </span>
+<span class="sd">        mc = MyClass(var2=&#39;case2&#39;)</span>
+<span class="sd">        print &quot;mc._var1 =&quot;, mc._var1, &quot;mc._var2=&quot;, mc._var2</span>
+<span class="sd">        </span>
+<span class="sd">    and that will give::</span>
+<span class="sd">        </span>
+<span class="sd">        mc._var1 = None mc._var2= case2</span>
+<span class="sd">        </span>
+<span class="sd">    Finally, if the user tries to pass an invalid argument, an error is thrown.::</span>
+<span class="sd">        </span>
+<span class="sd">        mc = MyClass(not_in_dict=&#39;My Invalid Keyword Arg&#39;)</span>
+<span class="sd">        print &quot;mc._var1 =&quot;, mc._var1, &quot;mc._var2=&quot;, mc._var2</span>
+<span class="sd">        </span>
+<span class="sd">    This is the output.::</span>
+<span class="sd">        </span>
+<span class="sd">        AttributeError: Unknown property not_in_dict</span>
+<span class="sd">        </span>
+<span class="sd">    ..note::</span>
+<span class="sd">        </span>
+<span class="sd">        This function removes the overriden items from the ``defaults`` dict. If the class</span>
+<span class="sd">        needs to retain this dict, it should send a copy to this function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Set the value of the parameters passed in.</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;set_&#39;</span> <span class="o">+</span> <span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Unknown property </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">defaults</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    
+    <span class="c"># Set any parameters not passed in to their default values.</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;set_&#39;</span> <span class="o">+</span> <span class="n">key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Unknown property </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,230 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.hoctranslate &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.hoctranslate</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utility methods for translating Python dicts into hoc template objects or</span>
+<span class="sd">global variables in NEURON accessible to hoc.</span>
+
+<span class="sd">@author: - Thomas McTavish</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<div class="viewcode-block" id="bool_to_hoc_double"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.bool_to_hoc_double">[docs]</a><span class="k">def</span> <span class="nf">bool_to_hoc_double</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a python boolean into a global hoc double value.</span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    :param key: Name of the variable</span>
+<span class="sd">    :param val: True or False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc(</span><span class="se">\&quot;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">))</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="num_to_hoc_double"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.num_to_hoc_double">[docs]</a><span class="k">def</span> <span class="nf">num_to_hoc_double</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a python number into a global hoc double value.</span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    :param key: Name of the variable</span>
+<span class="sd">    :param val: Python integer or float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc(</span><span class="se">\&quot;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="str_to_hoc_strdef"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.str_to_hoc_strdef">[docs]</a><span class="k">def</span> <span class="nf">str_to_hoc_strdef</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a python string into a global hoc strdef.</span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    :param key: Name of the variable</span>
+<span class="sd">    :param val: Python string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc(</span><span class="se">\&quot;</span><span class="s">strdef &#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc.&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;=</span><span class="se">\&quot;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+    </div>
+<div class="viewcode-block" id="numpy_array_to_hoc_vector"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.numpy_array_to_hoc_vector">[docs]</a><span class="k">def</span> <span class="nf">numpy_array_to_hoc_vector</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a 1D numpy array into a global hoc Vector.</span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    :param key: Name of the variable</span>
+<span class="sd">    :param val: 1D numpy array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc(</span><span class="se">\&quot;</span><span class="s">objref &#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc.&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;=hoc.Vector(val)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="list_to_hoc_vector"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.list_to_hoc_vector">[docs]</a><span class="k">def</span> <span class="nf">list_to_hoc_vector</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a 1D list of ints or floats into a global hoc Vector.</span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    :param key: Name of the variable</span>
+<span class="sd">    :param val: 1D list of ints or floats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc(</span><span class="se">\&quot;</span><span class="s">objref &#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&quot;</span><span class="s">)&#39;</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">floatvec</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+        <span class="n">exec_str</span> <span class="o">=</span> <span class="s">&#39;hoc.&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;=hoc.Vector(floatvec)&#39;</span>
+        <span class="k">exec</span><span class="p">(</span><span class="n">exec_str</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="dict_to_global"><a class="viewcode-back" href="../../../hoctranslate.html#neuronpy.util.hoctranslate.dict_to_global">[docs]</a><span class="k">def</span> <span class="nf">dict_to_global</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">the_dict</span><span class="p">,</span> <span class="n">show_warning</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Translate numbers, strings, and boolean values of a Python dictionary into </span>
+<span class="sd">    global variables in NEURON. The keys of the dict become the variable names </span>
+<span class="sd">    in hoc.  If the hoc variables already exist, they will be overwritten. All </span>
+<span class="sd">    values that are boolean, ints, or floats are translated to a double in hoc.</span>
+<span class="sd">    Strings are treated as hoc ``strdef`` objects. Any</span>
+<span class="sd">    other types of the dict are ignored.</span>
+<span class="sd">    </span>
+<span class="sd">    :param hoc: A hoc instance as attained by ``from neuron import h``.</span>
+<span class="sd">    </span>
+<span class="sd">    :param the_dict: Dict to translate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">exlist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">the_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c"># Number convert to hoc double</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="nb">int</span><span class="p">())</span> <span class="ow">or</span> \
+                    <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="nb">float</span><span class="p">()):</span>
+                <span class="n">num_to_hoc_double</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="c"># Boolean convert to hoc double</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="nb">bool</span><span class="p">()):</span>
+                <span class="n">bool_to_hoc_double</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="c"># String convert to hoc strdef</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="nb">str</span><span class="p">()):</span>
+                <span class="n">str_to_hoc_strdef</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="c"># Numpy array convert to hoc Vector</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">numpy_array_to_hoc_vector</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="c"># List, convert to hoc Vector</span>
+            <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="nb">list</span><span class="p">()):</span>
+                <span class="n">list_to_hoc_vector</span><span class="p">(</span><span class="n">hoc</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c"># Append any that cannot be converted and continue</span>
+            <span class="n">exlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            
+    <span class="k">if</span> <span class="n">show_warning</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">exlist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">warnstr</span> <span class="o">=</span> <span class="s">&#39;WARNING: In hoctranslate.dict_to_global(), &#39;</span>
+        <span class="n">warnstr</span> <span class="o">+=</span> <span class="s">&#39;the following variables were not translated into &#39;</span>
+        <span class="n">warnstr</span> <span class="o">+=</span> <span class="s">&#39;hoc globals:</span><span class="se">\n</span><span class="s">    [&#39;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">exlist</span><span class="p">:</span>
+            <span class="n">warnstr</span> <span class="o">+=</span> <span class="n">item</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span>
+        <span class="n">warnstr</span> <span class="o">+=</span> <span class="s">&#39;]&#39;</span>
+        <span class="k">print</span> <span class="n">warnstr</span>
+        </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

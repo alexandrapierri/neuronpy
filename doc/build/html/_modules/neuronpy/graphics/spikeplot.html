@@ -1,0 +1,988 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.graphics.spikeplot &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.graphics.spikeplot</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;Plot spike data in a raster plot.</span>
+
+<span class="sd">Plot spike times as a raster plot where the horizontal axis is time and the</span>
+<span class="sd">rows of the vertical axis are spike trains of individual neurons. This </span>
+<span class="sd">sets and holds many variables for plotting such that the user</span>
+<span class="sd">can simply set the parameters once and then redraw the spikes or scale and</span>
+<span class="sd">zoom to navigate spike data.</span>
+
+<span class="sd">EXAMPLE:</span>
+
+<span class="sd">This simple example generates some random &quot;spikes&quot; and displays them.</span>
+
+<span class="sd">::</span>
+
+<span class="sd">    import numpy</span>
+<span class="sd">    from neuronpy.graphics import spikeplot</span>
+
+<span class="sd">    spikes = []</span>
+<span class="sd">    num_cells = 10</span>
+<span class="sd">    num_spikes_per_cell = 20</span>
+<span class="sd">    frequency = 20</span>
+
+<span class="sd">    # Make the spike data. Use a simple Poisson-like spike generator </span>
+<span class="sd">    # (just for illustrative purposes here. Better spike generators should </span>
+<span class="sd">    # be used in simulations).</span>
+<span class="sd">    for i in range(num_cells):</span>
+<span class="sd">        isi=numpy.random.poisson(frequency, num_spikes_per_cell)</span>
+<span class="sd">        spikes.append(numpy.cumsum(isi))</span>
+<span class="sd">        </span>
+<span class="sd">    # spikes is now a list of lists where each cell has a list of spike</span>
+<span class="sd">    # times. Now, let&#39;s plot these spikes.</span>
+<span class="sd">    sp = spikeplot.SpikePlot(savefig=True)</span>
+<span class="sd">    sp.plot_spikes(spikes)</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-03-01): initial version, 0.1</span>
+<span class="sd">- THOMAS MCTAVISH (2012-04-10): Few changes to get spiketimehistograms and</span>
+<span class="sd">    spikesums to coexist better.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1.5, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2012 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">lines</span>
+<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">colorConverter</span>
+<span class="kn">from</span> <span class="nn">matplotlib.backends.backend_pdf</span> <span class="kn">import</span> <span class="n">PdfPages</span>
+
+<span class="kn">from</span> <span class="nn">neuronpy.graphics</span> <span class="kn">import</span> <span class="n">spikeparams</span>
+<span class="kn">from</span> <span class="nn">neuronpy.graphics</span> <span class="kn">import</span> <span class="n">spiketimehistogram</span>
+<span class="kn">from</span> <span class="nn">neuronpy.graphics</span> <span class="kn">import</span> <span class="n">spikesum</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">listutil</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">spiketrain</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util</span> <span class="kn">import</span> <span class="n">vartest</span>
+<span class="kn">from</span> <span class="nn">neuronpy.util.decorators</span> <span class="kn">import</span> <span class="n">set_overrides_and_defaults</span>
+    
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;0.1.1&quot;</span>
+            
+<div class="viewcode-block" id="SpikePlot"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot">[docs]</a><span class="k">class</span> <span class="nc">SpikePlot</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manager for the spike raster </span>
+<span class="sd">    `axes &lt;http://matplotlib.sourceforge.net/api/axes_api.html&gt;`_ as well </span>
+<span class="sd">    as the axes manager for </span>
+<span class="sd">    :class:`~neuronpy.graphics.spiketimehistogram.SpikeTimeHistogram`, and</span>
+<span class="sd">    :class:`~neuronpy.graphics.spikesum.SpikeSum` subplots. Additionally, the</span>
+<span class="sd">    line formatting parameters in </span>
+<span class="sd">    :class:`~neuronpy.graphics.spikeparams.SpikeParams`</span>
+<span class="sd">    funnel through this object. In fact, it may be rare to access those</span>
+<span class="sd">    classes directly and instead use the methods in this class</span>
+<span class="sd">    </span>
+<span class="sd">    Plots are drawn iteratively in that the user specifies the drawing </span>
+<span class="sd">    parameters for a set of spikes *before* telling the ``SpikePlot`` object to</span>
+<span class="sd">    plot any spikes. Therefore, when plotting multiple sets of spikes in the</span>
+<span class="sd">    same plot, the paradigm is::</span>
+<span class="sd">    </span>
+<span class="sd">        sp = SpikePlot()</span>
+<span class="sd">        sp.plot_spikes(some_spikes)</span>
+<span class="sd">        sp.set_&lt;some_line_format_method&gt;()</span>
+<span class="sd">        sp.set_&lt;some_other_formatting_options&gt;()</span>
+<span class="sd">        sp.plot_spikes(some_other_spikes)</span>
+<span class="sd">        </span>
+<span class="sd">    Indeed, the method to be most familiar with is :func:`plot_spikes`.</span>
+<span class="sd">    </span>
+<span class="sd">    If the spike data is not too large to fit into RAM and you want to </span>
+<span class="sd">    navigate it, it is generally a good idea to specify the complete data </span>
+<span class="sd">    to plot and then simply modify the view of the axes to zoom or translate </span>
+<span class="sd">    the plot. This is detailed in :func:`update_xlim`.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters can be set during instanciation of a ``SpikePlot`` object by</span>
+<span class="sd">    passing in various ``&lt;parameter&gt;=&lt;value&gt;`` pairs or through accessor </span>
+<span class="sd">    methods, ``get_&lt;parameter&gt;()`` and ``set_&lt;parameter&gt;()``. As </span>
+<span class="sd">    ``&lt;parameter&gt;=&lt;value&gt;`` pairs, they use the ``kwargs`` (short for </span>
+<span class="sd">    *keyword arguments*) parameter on instanciation. Below is a summary of </span>
+<span class="sd">    keyword parameters, which are more detailed in the corresponding </span>
+<span class="sd">    ``set_&lt;parameter&gt;()`` method. Some lesser-used parameters have accessor</span>
+<span class="sd">    methods, but are not available as keyword parameters.</span>
+
+<span class="sd">    Summary of SpikePlot keyword parameters:</span>
+<span class="sd">    </span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    |     Parameter    |            Description          |      Default      |</span>
+<span class="sd">    +==================+=================================+===================+</span>
+<span class="sd">    | fig_             | The Figure_ handle.             | ``None``          |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | fig_name_        | Name of figure, if saved as     |``&#39;spikeplot.png&#39;``|</span>
+<span class="sd">    |                  | a file.                         |                   |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | figsize_         | Size of the figure, in inches.  | ``(8, 6)``        |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | marker_          | Tick marks style.               | ``&#39;|&#39;``           |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | markercolor_     | Line and marker color.          | ``&#39;black&#39;``       |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | markeredgewidth_ | Line and edge width of tick     | ``0.75``          |</span>
+<span class="sd">    |                  | marks.                          |                   |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | markerscale_     | Tick mark row height.           | ``1.0``           |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | savefig_         | Flag to save a figure to a      | ``False``         |</span>
+<span class="sd">    |                  | file when drawing.              |                   |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+</span>
+<span class="sd">    | sth_ratio_       | |SpikeTimeHistogram| axes       | ``0``             |</span>
+<span class="sd">    |                  | height.                         |                   |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+ </span>
+<span class="sd">    | sum_ratio_       | |SpikeSum| Histogram axes       | ``0``             |</span>
+<span class="sd">    |                  | width.                          |                   |</span>
+<span class="sd">    +------------------+---------------------------------+-------------------+ </span>
+<span class="sd">    </span>
+<span class="sd">    .. _fig: #neuronpy.graphics.spikeplot.SpikePlot.set_fig</span>
+<span class="sd">    .. _Figure: http://matplotlib.sourceforge.net/api/figure_api.html</span>
+<span class="sd">    .. _fig_name: #neuronpy.graphics.spikeplot.SpikePlot.set_fig_name</span>
+<span class="sd">    .. _figsize: #neuronpy.graphics.spikeplot.SpikePlot.set_figsize</span>
+<span class="sd">    .. _marker: #neuronpy.graphics.spikeplot.SpikePlot.set_marker</span>
+<span class="sd">    .. _markercolor: #neuronpy.graphics.spikeplot.SpikePlot.set_markercolor</span>
+<span class="sd">    .. _markeredgewidth: \</span>
+<span class="sd">    #neuronpy.graphics.spikeplot.SpikePlot.set_markeredgewidth</span>
+<span class="sd">    .. _markerscale: #neuronpy.graphics.spikeplot.SpikePlot.set_markerscale</span>
+<span class="sd">    .. _savefig: #neuronpy.graphics.spikeplot.SpikePlot.set_savefig</span>
+<span class="sd">    .. _sth_ratio: #neuronpy.graphics.spikeplot.SpikePlot.set_sth_ratio</span>
+<span class="sd">    .. _sum_ratio: #neuronpy.graphics.spikeplot.SpikePlot.set_sum_ratio</span>
+<span class="sd">    .. |SpikeSum| replace:: </span>
+<span class="sd">        :class:`~neuronpy.graphics.spikesum.SpikeSum`</span>
+<span class="sd">    .. |SpikeTimeHistogram| replace:: </span>
+<span class="sd">        :class:`~neuronpy.graphics.spiketimehistogram.SpikeTimeHistogram`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a SpikePlot instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Make a scratch variable for line formatting tests.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_line2d</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">Line2D</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c"># Make a dictionary of parameters and their default values.</span>
+        <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;fig&#39;</span><span class="p">:</span><span class="bp">None</span><span class="p">,</span>
+                <span class="s">&#39;fig_name&#39;</span><span class="p">:</span><span class="s">&#39;spikeplot.png&#39;</span><span class="p">,</span>
+                <span class="s">&#39;figsize&#39;</span><span class="p">:</span><span class="bp">None</span><span class="p">,</span>
+                <span class="s">&#39;linestyle&#39;</span><span class="p">:</span><span class="s">&#39;None&#39;</span><span class="p">,</span>
+                <span class="s">&#39;linewidth&#39;</span><span class="p">:</span><span class="mf">0.75</span><span class="p">,</span>
+                <span class="s">&#39;marker&#39;</span><span class="p">:</span><span class="s">&#39;|&#39;</span><span class="p">,</span>
+                <span class="s">&#39;markercolor&#39;</span><span class="p">:</span><span class="s">&#39;black&#39;</span><span class="p">,</span>
+                <span class="s">&#39;markeredgewidth&#39;</span><span class="p">:</span><span class="mf">0.75</span><span class="p">,</span>
+                <span class="s">&#39;markerscale&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="s">&#39;savefig&#39;</span><span class="p">:</span><span class="bp">False</span><span class="p">,</span>
+                <span class="s">&#39;sth_ratio&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span>
+                <span class="s">&#39;sum_ratio&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">}</span>
+        
+        <span class="n">set_overrides_and_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defaults</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+                
+        <span class="c"># Reset the figsize variable, if a figure was passed in</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_figsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">())</span>
+            
+        <span class="c"># Set other member variables not in the keywords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span> <span class="o">=</span> <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">maxint</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes_lim</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="o">=</span> <span class="n">spiketimehistogram</span><span class="o">.</span><span class="n">SpikeTimeHistogram</span><span class="p">(</span><span class="n">spike_plot</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_sth_ratio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span><span class="p">)</span> <span class="c"># Reset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="o">=</span> <span class="n">spikesum</span><span class="o">.</span><span class="n">SpikeSum</span><span class="p">(</span><span class="n">spike_plot</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_sum_ratio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span><span class="p">)</span> <span class="c"># Reset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes_pad</span> <span class="o">=</span> <span class="mf">0.025</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_pad</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_draw</span> <span class="o">=</span> <span class="bp">True</span>
+        
+<div class="viewcode-block" id="SpikePlot.plot_spikes"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.plot_spikes">[docs]</a>    <span class="k">def</span> <span class="nf">plot_spikes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spikes</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">draw</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">savefig</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> \
+            <span class="n">cell_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot the spikes. This sets or appends the spike data to be drawn. If</span>
+<span class="sd">        a single snapshot is needed, simply pass in the desired spikes to plot. </span>
+<span class="sd">        If, however, the plot is to be interactive, it is best to send the </span>
+<span class="sd">        full range of spikes and then zoom and translate by modifying the </span>
+<span class="sd">        axes via the :func:`update_xlim` method.</span>
+<span class="sd">        </span>
+<span class="sd">        :param spikes: a 2D vector where cells are in the first dimension and</span>
+<span class="sd">            their spike times are in the second. This can be a list of lists</span>
+<span class="sd">            or a 2D numpy.ndarray. If the spike train of a single cell</span>
+<span class="sd">            is desired for plotting, simply encapsulate the 1D</span>
+<span class="sd">            vector in square brackets: ``sp.plot_spikes([spikevec])``.</span>
+<span class="sd">            </span>
+<span class="sd">        :param label: is the name assigned to this set of spikes. This label</span>
+<span class="sd">            is used largely internally by the SpikePlot object to </span>
+<span class="sd">            differentiate multiple sets of spikes. Default is ``None``. Any</span>
+<span class="sd">            previously assigned spikes with this label will be replaced.</span>
+<span class="sd">            </span>
+<span class="sd">            .. note:: ``None`` is still a label, so repeated calls to </span>
+<span class="sd">                :func:`plot_spikes` without explicitly setting the label will</span>
+<span class="sd">                replace any previously set spikes.</span>
+<span class="sd">            </span>
+<span class="sd">        :param draw: is a boolean to specify whether or not to draw. By </span>
+<span class="sd">            default, this is ``True``, but it may be desirable to not draw when </span>
+<span class="sd">            ascribing multiple sets of spikes and to draw to the screen when </span>
+<span class="sd">            setting the last spikes. If other postprocessing is done to the</span>
+<span class="sd">            figure or axes, it may also make sense to set this value to </span>
+<span class="sd">            ``False``.</span>
+<span class="sd">            </span>
+<span class="sd">        :param savefig: is a boolean to specify whether to save the figure to</span>
+<span class="sd">            a file. By default this is ``None`` and is undefined. If, however,</span>
+<span class="sd">            it is set to ``True`` or ``False``, then this is equivalent to</span>
+<span class="sd">            calling :func:`set_savefig` with that value.</span>
+<span class="sd">            </span>
+<span class="sd">        :param cell_offset: is a vertical offset for this set of spikes in the</span>
+<span class="sd">            spike raster. By default this is ``0``. However, if the spike </span>
+<span class="sd">            raster contains stacked cells of different types (i.e. multiple </span>
+<span class="sd">            spike sets each with a different label), then the offset values </span>
+<span class="sd">            specifies the vertical offset for these cells.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Make sure this is a valid set of spikes</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span> <span class="ow">and</span> \
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">spikes</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+            <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;spikes needs to be a list of lists or 2d numpy array&#39;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+            
+        <span class="c"># If there are no spikes to draw, just return</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        
+        <span class="c"># Remove any pre-existing lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_lines</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        
+        <span class="c"># Get the minimum and maximum values of these spikes</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">spikes_min_x</span><span class="p">,</span> <span class="n">spikes_max_x</span> <span class="o">=</span> <span class="n">spiketrain</span><span class="o">.</span><span class="n">get_spike_bounds</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="n">listutil</span><span class="o">.</span><span class="n">ListEmptyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="k">print</span> <span class="n">ex</span>
+            <span class="c">#raise(ex)</span>
+            <span class="k">return</span>
+        
+        <span class="c"># If refresh is True, then we completely redraw the figure.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># Make a new figure</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="o">=</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_figsize</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># Make the spike axes. Set to fill the figure and adjust later if</span>
+            <span class="c"># other axes are drawn.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="s">&#39;out&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> 
+                                          <span class="n">width</span><span class="o">=.</span><span class="mi">75</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;black&#39;</span><span class="p">)</span>
+            
+        <span class="c"># Update the spike_params dictionary with these spikes.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c"># Ignore if not present</span>
+            
+        <span class="k">if</span> <span class="n">cell_offset</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">new_height</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)</span> <span class="o">+</span> <span class="n">cell_offset</span>
+            <span class="k">for</span> <span class="n">spike_params</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+                <span class="n">msize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_markersize</span><span class="p">(</span><span class="n">new_height</span><span class="p">,</span> 
+                                                   <span class="n">spike_params</span><span class="o">.</span><span class="n">markerscale</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">spike_params</span><span class="o">.</span><span class="n">raster_lines</span><span class="p">:</span>
+                    <span class="n">line</span><span class="o">.</span><span class="n">set_markersize</span><span class="p">(</span><span class="n">msize</span><span class="p">)</span>
+
+        <span class="n">spike_params</span> <span class="o">=</span> <span class="n">spikeparams</span><span class="o">.</span><span class="n">SpikeParams</span><span class="p">(</span><span class="n">spikes</span><span class="o">=</span><span class="n">spikes</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> \
+                <span class="n">data_xlim</span> <span class="o">=</span> <span class="p">[</span><span class="n">spikes_min_x</span><span class="p">,</span> <span class="n">spikes_max_x</span><span class="p">],</span> \
+                <span class="n">cell_offset</span><span class="o">=</span><span class="n">cell_offset</span><span class="p">,</span> \
+                <span class="n">marker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_marker</span><span class="p">,</span> <span class="n">markercolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span><span class="p">,</span> \
+                <span class="n">markerscale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markerscale</span><span class="p">,</span> \
+                <span class="n">markeredgewidth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markeredgewidth</span><span class="p">,</span> \
+                <span class="n">linestyle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_linestyle</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_linewidth</span><span class="p">,</span> \
+                <span class="n">sth_redraw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">redraw</span><span class="p">,</span> \
+                <span class="n">sth_style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_style</span><span class="p">,</span> <span class="n">sth_dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_dt</span><span class="p">,</span> \
+                <span class="n">sth_kernel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_kernel</span><span class="p">,</span> <span class="n">sth_origin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_origin</span><span class="p">,</span> \
+                <span class="n">sum_linewidth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_linewidth</span><span class="p">,</span> \
+                <span class="n">sum_redraw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">redraw</span><span class="p">,</span> \
+                <span class="n">sum_style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_style</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">spike_params</span>
+        
+        <span class="c"># Update the complete data bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_data_xlim</span><span class="p">()</span>
+
+        <span class="c"># Update raster_axes ylim</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ylim</span><span class="p">()</span>
+        
+        <span class="c"># Get the x data length</span>
+        <span class="n">range_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c"># Pad the visible axis range a bit.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes_lim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> \
+                <span class="p">(</span><span class="n">range_x</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_pad</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes_lim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span> \
+        <span class="n">numpy</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">range_x</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_pad</span><span class="p">)),</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_axes_lim</span><span class="p">)</span>
+     
+        <span class="c"># markersize to be spike axes height / (num_cells+1)</span>
+        <span class="n">m_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_markersize</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="n">raster_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c"># Actually draw the spikes.</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spikes</span><span class="p">)):</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">cell_offset</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">Line2D</span><span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">row</span><span class="p">,</span> \
+                    <span class="n">linestyle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_linestyle</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_linewidth</span><span class="p">,</span> \
+                    <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span><span class="p">,</span> \
+                    <span class="n">marker</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_marker</span><span class="p">,</span> <span class="n">markeredgecolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span><span class="p">,</span> \
+                    <span class="n">markerfacecolor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="n">m_size</span><span class="p">,</span> \
+                    <span class="n">markeredgewidth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_markeredgewidth</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">add_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">raster_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">raster_lines</span> <span class="o">=</span> <span class="n">raster_lines</span>
+
+        <span class="c"># If there is a SpikeTimeHistogram object, create or update it.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_sth_ratio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spike_params</span><span class="p">)</span>
+
+        <span class="c"># If there is a SpikeSum object, create or update it.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_sum_ratio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spike_params</span><span class="p">)</span>
+                    
+        <span class="c"># If we are supposed to draw, go ahead.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_draw</span><span class="p">(</span><span class="n">draw</span><span class="p">)</span>
+            
+        <span class="c"># If we are supposed to save the figure, do so.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_savefig</span><span class="p">(</span><span class="n">savefig</span><span class="p">)</span>
+    </div>
+    <span class="k">def</span> <span class="nf">_remove_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove the drawn spikes with this label from the raster axes.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">spike_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">spike_params</span><span class="o">.</span><span class="n">raster_lines</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span> <span class="c"># Ignore if the lines do not already exist</span>
+                
+    <span class="k">def</span> <span class="nf">_calculate_data_xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the earliest and latest spike times out of all spikes</span>
+<span class="sd">        in the spikes dictionary.&quot;&quot;&quot;</span>
+        <span class="n">min_x</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">maxint</span>
+        <span class="n">max_x</span> <span class="o">=</span> <span class="mf">0.</span>
+        
+        <span class="k">for</span> <span class="n">spike_param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">xlim</span> <span class="o">=</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">data_xlim</span>
+            <span class="c">#print xlim</span>
+            <span class="k">if</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_x</span><span class="p">:</span>
+                <span class="n">min_x</span> <span class="o">=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_x</span><span class="p">:</span>
+                <span class="n">max_x</span> <span class="o">=</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_xlim</span> <span class="o">=</span> <span class="p">[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">max_x</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the total number of rows to draw. &quot;&quot;&quot;</span>
+        <span class="n">total_cells</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">spike_param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spike_params</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">num_cells</span> <span class="o">=</span> <span class="n">spike_param</span><span class="o">.</span><span class="n">cell_offset</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">spike_param</span><span class="o">.</span><span class="n">spikes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">num_cells</span> <span class="o">&gt;</span> <span class="n">total_cells</span><span class="p">:</span>
+                <span class="n">total_cells</span> <span class="o">=</span> <span class="n">num_cells</span>
+        <span class="n">ylim</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_cells</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ylim</span><span class="o">-.</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">total_cells</span>
+                
+    <span class="k">def</span> <span class="nf">_do_draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">draw</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Actually draw the figure. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">draw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">draw</span> <span class="ow">is</span> <span class="bp">True</span> <span class="ow">or</span> <span class="n">draw</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_draw</span> <span class="o">=</span> <span class="n">draw</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_draw</span><span class="p">:</span>
+            <span class="n">pyplot</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="n">pyplot</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_do_savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">savefig</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Actually save the figure to a file. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">savefig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">vartest</span><span class="o">.</span><span class="n">isbool</span><span class="p">(</span><span class="n">savefig</span><span class="p">,</span> <span class="s">&#39;savefig&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_savefig</span> <span class="o">=</span> <span class="n">savefig</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_savefig</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.pdf&#39;</span><span class="p">):</span>
+                <span class="n">pdf</span> <span class="o">=</span> <span class="n">PdfPages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig_name</span><span class="p">)</span>
+                <span class="n">pdf</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="p">)</span>
+                <span class="n">pdf</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pyplot</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig_name</span><span class="p">)</span>
+                
+<div class="viewcode-block" id="SpikePlot.update_xlim"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.update_xlim">[docs]</a>    <span class="k">def</span> <span class="nf">update_xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlim</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the xlim of the raster axes and propagate this info to</span>
+<span class="sd">        the other axes if they are visible, redrawing and re-writing a</span>
+<span class="sd">        figure if necessary. </span>
+<span class="sd">        </span>
+<span class="sd">        :param xlim: is a tuple of length 2 specifying the new axes bounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">xlim</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">xlim</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xlim</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">update_xlim</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">update_xlim</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_do_draw</span><span class="p">()</span>    <span class="c"># Draw if necessary</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_do_savefig</span><span class="p">()</span> <span class="c"># Save the figure, if necessary</span>
+                        </div>
+    <span class="k">def</span> <span class="nf">_calculate_markersize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_cells</span><span class="p">,</span> <span class="n">markerscale</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given the markerscale and the size of the raster axes, determine</span>
+<span class="sd">        the size of the marker to draw.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">markerscale</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">markerscale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_markerscale</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span> \
+            <span class="nb">float</span><span class="p">(</span><span class="n">num_cells</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">height</span> <span class="o">+</span> <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">)</span> <span class="o">*</span> <span class="n">markerscale</span>
+
+<div class="viewcode-block" id="SpikePlot.get_savefig"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_savefig">[docs]</a>    <span class="k">def</span> <span class="nf">get_savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the flag of whether a file is saved upon plotting.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_savefig</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_marker"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_marker">[docs]</a>    <span class="k">def</span> <span class="nf">get_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the marker type for raster tick marks.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_marker</span>
+    </div>
+<div class="viewcode-block" id="SpikePlot.get_markercolor"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_markercolor">[docs]</a>    <span class="k">def</span> <span class="nf">get_markercolor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the marker and line color.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_markerscale"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_markerscale">[docs]</a>    <span class="k">def</span> <span class="nf">get_markerscale</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the relative size of the marker in the raster plot.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_markerscale</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_markeredgewidth"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_markeredgewidth">[docs]</a>    <span class="k">def</span> <span class="nf">get_markeredgewidth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the size of the tick mark edge. In the case of a vertical</span>
+<span class="sd">        bar, this is the linewidth of that bar.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_markeredgewidth</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_linestyle"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_linestyle">[docs]</a>    <span class="k">def</span> <span class="nf">get_linestyle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the linestyle of the raster plot.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_linestyle</span>
+    </div>
+<div class="viewcode-block" id="SpikePlot.get_linewidth"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_linewidth">[docs]</a>    <span class="k">def</span> <span class="nf">get_linewidth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the line width of the raster plot if the linestyle is not</span>
+<span class="sd">        &#39;none&#39;.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_linewidth</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_fig_name"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_fig_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_fig_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the name of the file that will be written when plotted </span>
+<span class="sd">        with the *savefig* variable set to True.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig_name</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_fig"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_fig">[docs]</a>    <span class="k">def</span> <span class="nf">get_fig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a handle to the Figure.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_raster_axes"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_raster_axes">[docs]</a>    <span class="k">def</span> <span class="nf">get_raster_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a handle to the raster axes.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_figsize"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_figsize">[docs]</a>    <span class="k">def</span> <span class="nf">get_figsize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the size of the figure in inches.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_figsize</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_sth"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_sth">[docs]</a>    <span class="k">def</span> <span class="nf">get_sth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the instance of the SpikeTimeHistogram object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_sum"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_sum">[docs]</a>    <span class="k">def</span> <span class="nf">get_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the instance of the SpikeSum object.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.get_axes_pad"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_axes_pad">[docs]</a>    <span class="k">def</span> <span class="nf">get_axes_pad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the amount of padding between the raster axes and the</span>
+<span class="sd">        spike time histogram and/or spike sum axes if they are drawn.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes_pad</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.set_axes_pad"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_axes_pad">[docs]</a>    <span class="k">def</span> <span class="nf">set_axes_pad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pad</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the amount of padding between the spike axes and</span>
+<span class="sd">        the spike time histogram and cumulative spike plot if</span>
+<span class="sd">        they are shown. </span>
+<span class="sd">        </span>
+<span class="sd">        :param pad: amount to pad. This value is in figure </span>
+<span class="sd">            coordinates and needs to be between 0 and 1, and </span>
+<span class="sd">            probably very close to 0. A value of 0 means that</span>
+<span class="sd">            the axes touch each other.</span>
+<span class="sd">        </span>
+<span class="sd">        :type pad: float; default 0.01</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">inrange</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="s">&#39;pad&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_pad</span> <span class="o">=</span> <span class="n">pad</span>
+</div>
+<div class="viewcode-block" id="SpikePlot.get_data_pad"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.get_data_pad">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_pad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the amount of padding in terms of the data width</span>
+<span class="sd">        to draw a full-screen image. The data width is the last</span>
+<span class="sd">        spike in the data minus the first spike in the data. </span>
+<span class="sd">        The pad ensures that the first and last spike will appear</span>
+<span class="sd">        in the figure and not be blocked by the vertical axis.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_pad</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.set_data_pad"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_data_pad">[docs]</a>    <span class="k">def</span> <span class="nf">set_data_pad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pad</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the amount of padding in terms of the data width</span>
+<span class="sd">        to draw a full-screen image. The data width is the last</span>
+<span class="sd">        spike in the data minus the first spike in the data. </span>
+<span class="sd">        The pad ensures that the first and last spike will appear</span>
+<span class="sd">        in the figure and not be blocked by the vertical axis. </span>
+<span class="sd">        </span>
+<span class="sd">        :param pad: amount to pad. The default value of 0.025 means</span>
+<span class="sd">            that the maximum x-axis dimensions will be </span>
+<span class="sd">            (first_spike - 0.025*data_width, last_spike + 0.025*data_width).</span>
+<span class="sd">        </span>
+<span class="sd">        :type pad: float; default 0.025</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">greater_than_or_equal</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="s">&#39;pad&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axes_pad</span> <span class="o">=</span> <span class="n">pad</span>
+                </div>
+<div class="viewcode-block" id="SpikePlot.set_marker"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_marker">[docs]</a>    <span class="k">def</span> <span class="nf">set_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the tick mark symbol. Valid markers are defined by</span>
+<span class="sd">        `Matplotlib.lines.Line2D markers \</span>
+<span class="sd">        &lt;http://matplotlib.sourceforge.net/</span>
+<span class="sd">        api/artist_api.html#matplotlib.lines.Line2D.set_marker&gt;`_.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_line2d</span><span class="o">.</span><span class="n">set_marker</span><span class="p">(</span><span class="n">marker</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_marker</span> <span class="o">=</span> <span class="n">marker</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Invalid marker parameter:&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> \
+            <span class="s">&quot; Use Matplotlib.lines markers.&quot;</span>
+            <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;See http://matplotlib.sourceforge.net/api/&#39;</span><span class="p">,</span> \
+                    <span class="s">&#39;artist_api.html#matplotlib.lines.Line2D.set_marker</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+            <span class="k">print</span> <span class="n">errstr</span>
+            <span class="k">raise</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_markercolor"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_markercolor">[docs]</a>    <span class="k">def</span> <span class="nf">set_markercolor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the marker color.</span>
+<span class="sd">        </span>
+<span class="sd">        :param color: Any `Matplotlib color \</span>
+<span class="sd">            &lt;http://matplotlib.sourceforge.net/api/colors_api.html&gt;`_.</span>
+<span class="sd">        </span>
+<span class="sd">        .. note:: Any subsequent drawing will keep this color,</span>
+<span class="sd">            so call :func:`get_markercolor` if you want to restore drawing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">colorConverter</span><span class="o">.</span><span class="n">to_rgba_array</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_markercolor</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Invalid color parameter:&quot;</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="s">&quot; Use Matplotlib colors.&quot;</span>
+            <span class="k">print</span> <span class="s">&quot;See http://matplotlib.sourceforge.net/api/colors_api.html</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="k">raise</span>
+    </div>
+<div class="viewcode-block" id="SpikePlot.set_markerscale"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_markerscale">[docs]</a>    <span class="k">def</span> <span class="nf">set_markerscale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">markerscale</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the scale of the tick marks between rows.</span>
+<span class="sd">        </span>
+<span class="sd">        :param markerscale: the relative marker size between rows.</span>
+<span class="sd">            A value of 1 means that the tick mark, if the marker is</span>
+<span class="sd">            `|`, will make it so that each row just touches. Smaller</span>
+<span class="sd">            values will make the marker size smaller and larger</span>
+<span class="sd">            values will cause the markers to bleed across rows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">greater_than</span><span class="p">(</span><span class="n">markerscale</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="s">&#39;markerscale&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_markerscale</span> <span class="o">=</span> <span class="n">markerscale</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_markeredgewidth"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_markeredgewidth">[docs]</a>    <span class="k">def</span> <span class="nf">set_markeredgewidth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">markeredgewidth</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the edge thickness of the tick mark.</span>
+<span class="sd">        </span>
+<span class="sd">        :param markeredgewidth: the thickness of the marker.</span>
+<span class="sd">        </span>
+<span class="sd">        :type markeredgewidth: float; default 0.75</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">greater_than</span><span class="p">(</span><span class="n">markeredgewidth</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="s">&#39;markeredgewidth&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_markeredgewidth</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">markeredgewidth</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SpikePlot.set_linestyle"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_linestyle">[docs]</a>    <span class="k">def</span> <span class="nf">set_linestyle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">linestyle</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the horizontal line style. Valid styles are defined by</span>
+<span class="sd">        `Matplotlib.lines.Line2D linestyle \</span>
+<span class="sd">        &lt;http://matplotlib.sourceforge.net/api/artist_api.html#matplotlib.lines.Line2D.set_linestyle&gt;`_.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_line2d</span><span class="o">.</span><span class="n">set_linestyle</span><span class="p">(</span><span class="n">linestyle</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_linestyle</span> <span class="o">=</span> <span class="n">linestyle</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Invalid linestyle parameter:&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="p">,</span> \
+            <span class="s">&quot; Use Matplotlib.lines linestyle.&quot;</span>
+            <span class="k">print</span> <span class="s">&quot;See http://matplotlib.sourceforge.net/api/</span><span class="se">\</span>
+<span class="s">            artist_api.html#matplotlib.lines.Line2D.set_linestyle</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="k">raise</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_linewidth"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_linewidth">[docs]</a>    <span class="k">def</span> <span class="nf">set_linewidth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">linewidth</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the width of the horizontal line for each cell, if the </span>
+<span class="sd">        linestyle is not &#39;None&#39;.</span>
+<span class="sd">        </span>
+<span class="sd">        :param linewidth: the width of the line.</span>
+<span class="sd">        </span>
+<span class="sd">        :type linewidth: float; default 0.75</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">greater_than</span><span class="p">(</span><span class="n">linewidth</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="s">&#39;linewidth&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_linewidth</span> <span class="o">=</span> <span class="n">linewidth</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.set_savefig"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_savefig">[docs]</a>    <span class="k">def</span> <span class="nf">set_savefig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">savefig</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the flag to save a figure after drawing. The name of the file is</span>
+<span class="sd">        defined by the ``fig_name`` variable.</span>
+<span class="sd">        </span>
+<span class="sd">        :param savefig: is a boolean to specify whether to save the plotted </span>
+<span class="sd">            figure to a file. By default this is *False*. When set to *True*, </span>
+<span class="sd">            the file specified by the ``fig_name`` member variable is written.</span>
+<span class="sd">    </span>
+<span class="sd">        .. note:: Since the interactive reference running on the </span>
+<span class="sd">            `NEURON SAGE server &lt;https:sage.med.yale.edu:8000&gt;`_</span>
+<span class="sd">            draws graphics by importing images into the web page. Many </span>
+<span class="sd">            examples set ``savefig`` to *True* during instanciation for </span>
+<span class="sd">            proper functionality with that guide.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">isbool</span><span class="p">(</span><span class="n">savefig</span><span class="p">,</span> <span class="s">&#39;savefig&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_savefig</span> <span class="o">=</span> <span class="n">savefig</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.set_fig_name"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_fig_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_fig_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig_name</span><span class="o">=</span><span class="s">&quot;spikeplot.png&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the name of the output figure.</span>
+<span class="sd">        </span>
+<span class="sd">        :param fig_name: the output file name.</span>
+<span class="sd">        </span>
+<span class="sd">        :type fig_name: str; default &quot;spikeplot.png&quot;</span>
+<span class="sd">        </span>
+<span class="sd">        .. note:: The extension should be included with the name and should</span>
+<span class="sd">            be a valid graphics format supported by the backend drawing</span>
+<span class="sd">            system. This is not checked for, but most graphics formats</span>
+<span class="sd">            include png, pdf, ps, eps and svg.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">fig_name</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;fig_name is </span><span class="si">%(a)s</span><span class="s"> and of type </span><span class="si">%(b)s</span><span class="s">.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+            <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">fig_name</span><span class="p">),</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">fig_name</span><span class="p">)}</span>
+            <span class="n">errstr</span> <span class="o">+=</span> <span class="s">&#39;  Instead, fig_name should be of type </span><span class="se">\&#39;</span><span class="s">str</span><span class="se">\&#39;\n</span><span class="s">&#39;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fig_name</span> <span class="o">=</span> <span class="n">fig_name</span>
+        </div>
+<div class="viewcode-block" id="SpikePlot.set_fig"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_fig">[docs]</a>    <span class="k">def</span> <span class="nf">set_fig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the figure handle.</span>
+<span class="sd">        </span>
+<span class="sd">        :param fig: the figure handle. If this is not None, then this </span>
+<span class="sd">            also instantiates the `ax` axes by either creating one if  </span>
+<span class="sd">            it does not already exist in the figure, or by assigning </span>
+<span class="sd">            the first axes object. If None, then the figure handle and</span>
+<span class="sd">            the axes handle are both set to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">pyplot</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+                <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;fig is of type </span><span class="si">%(a)s</span><span class="s"> and should be of type </span><span class="se">\&#39;</span><span class="s"> </span><span class="se">\</span>
+<span class="s">                matplotlib.figure.Figure</span><span class="se">\&#39;\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+                <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span> <span class="p">}</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">errstr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="o">=</span> <span class="n">fig</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="bp">None</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_raster_axes"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_raster_axes">[docs]</a>    <span class="k">def</span> <span class="nf">set_raster_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets (or resets) the raster axes to the axes handle passed in.</span>
+<span class="sd">        This may be necessary when resizing the image or axes so that the</span>
+<span class="sd">        markers can be resized to scale with the image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="o">=</span> <span class="n">axes</span>
+        <span class="k">if</span> <span class="n">axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">m_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_markersize</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">get_lines</span><span class="p">()))</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_lines</span><span class="p">():</span>
+                <span class="n">line</span><span class="o">.</span><span class="n">set_markersize</span><span class="p">(</span><span class="n">m_size</span><span class="p">)</span>
+        
+            <span class="c"># Make sure that the SpikeTimeHistogram has the same width as</span>
+            <span class="c"># we do.</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_sth&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">sth_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">sth_pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+                        <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">sth_pos</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+                   
+            <span class="c"># Make sure that the SpikeSum histogram has the same height as</span>
+            <span class="c"># we do.</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_sum&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">sum_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">sum_pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+                        <span class="n">sum_pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_figsize"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_figsize">[docs]</a>    <span class="k">def</span> <span class="nf">set_figsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the figure size in inches.</span>
+<span class="sd">        </span>
+<span class="sd">        :param figsize: a tuple specified as (width, height). If</span>
+<span class="sd">            None, then it will use the Matplotlib default for a figure</span>
+<span class="sd">            size when creating a new figure.</span>
+<span class="sd">        </span>
+<span class="sd">        :type figsize: tuple; default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pyplot</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">figsize</span><span class="p">)</span> <span class="c"># See if this generates an error.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_figsize</span> <span class="o">=</span> <span class="n">figsize</span>
+            <span class="c"># Update the markersizes</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">errstr</span> <span class="o">=</span> <span class="s">&#39;figsize == </span><span class="si">%(a)s</span><span class="s"> and is of type </span><span class="si">%(b)s</span><span class="s">.</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> \
+            <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">figsize</span><span class="p">),</span> <span class="s">&#39;b&#39;</span><span class="p">:</span><span class="nb">type</span><span class="p">(</span><span class="n">figsize</span><span class="p">)}</span>
+            <span class="n">errstr</span> <span class="o">+=</span> <span class="s">&#39;  Instead, figsize should be a </span><span class="se">\&#39;</span><span class="s">tuple</span><span class="se">\&#39;</span><span class="s"> of length 2.</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="k">print</span> <span class="n">errstr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_figsize</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">raise</span>
+            </div>
+<div class="viewcode-block" id="SpikePlot.set_sth_ratio"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_sth_ratio">[docs]</a>    <span class="k">def</span> <span class="nf">set_sth_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sth_ratio</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the ratio of the spike time histogram axes to the figure.</span>
+<span class="sd">        </span>
+<span class="sd">        :param sth_ratio: is the vertical amount between [0,1]</span>
+<span class="sd">            in figure space to draw a spike time histogram. A value</span>
+<span class="sd">            of zero means that the spike time histogram axes is not</span>
+<span class="sd">            drawn. A value of 0.5 means that the figure will split</span>
+<span class="sd">            vertically in half the spike raster and the histogram.</span>
+<span class="sd">            A value of 1.0 means that the spike raster is not drawn</span>
+<span class="sd">            but the histogram takes up the whole space.</span>
+<span class="sd">            </span>
+<span class="sd">        :type sth_ratio: float; default is zero.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">inrange</span><span class="p">(</span><span class="n">sth_ratio</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="s">&#39;sth_ratio&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span> <span class="o">=</span> <span class="n">sth_ratio</span>
+        
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_fig&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c"># Wait until later to initialize</span>
+            
+        <span class="k">if</span> <span class="n">sth_ratio</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="c"># Get the raster_axes&#39; current bounds</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+
+            <span class="c"># Move the bottom up, and shrink the height</span>
+            <span class="n">fsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
+            <span class="n">fig_ratio</span> <span class="o">=</span> <span class="n">fsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">fsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes_pad</span>
+            <span class="k">if</span> <span class="n">fig_ratio</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">:</span>
+                <span class="n">pad</span> <span class="o">*=</span> <span class="n">fig_ratio</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> \
+            <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span> <span class="o">*</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="o">+</span> <span class="n">pad</span><span class="p">,</span> \
+            <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> \
+            <span class="n">pos</span><span class="o">.</span><span class="n">height</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span> <span class="o">*</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">)</span> <span class="o">-</span> <span class="n">pad</span><span class="p">])</span>
+    
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">set_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">(</span> \
+            <span class="p">[</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth_ratio</span> <span class="o">*</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_raster_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="p">)</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Delete the SpikeTimeHistogram object and axes.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="c"># Nothing to do. Already does not exist</span>
+                
+            <span class="c"># Resize the raster_axes</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">pos_sth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">pos_sth</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+                <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span> <span class="o">+</span> <span class="n">pos_sth</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+            
+            <span class="c"># Turn on the x-axis tick labels</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="c"># Delete</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">delaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sth</span><span class="o">.</span><span class="n">_axes</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sth_axes</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># Necessary?</span>
+ </div>
+<div class="viewcode-block" id="SpikePlot.set_sum_ratio"><a class="viewcode-back" href="../../../spikeplot.html#neuronpy.graphics.spikeplot.SpikePlot.set_sum_ratio">[docs]</a>    <span class="k">def</span> <span class="nf">set_sum_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sum_ratio</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the ratio of the spike sum histogram axes to the figure.</span>
+<span class="sd">        </span>
+<span class="sd">        :param sum_ratio: is the horizontal amount between [0,1]</span>
+<span class="sd">            in figure space to draw a spike time histogram. A value</span>
+<span class="sd">            of zero means that the spike time histogram axes is not</span>
+<span class="sd">            drawn. A value of 0.5 means that the figure will split</span>
+<span class="sd">            vertically in half the spike raster and the histogram.</span>
+<span class="sd">            A value of 1.0 means that the spike raster is not drawn</span>
+<span class="sd">            but the histogram takes up the whole space.</span>
+<span class="sd">            </span>
+<span class="sd">        :type sum_ratio: float; default is zero.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vartest</span><span class="o">.</span><span class="n">inrange</span><span class="p">(</span><span class="n">sum_ratio</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="s">&#39;sum_ratio&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span> <span class="o">=</span> <span class="n">sum_ratio</span>
+        
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;_fig&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c"># Wait until later to initialize</span>
+            
+        <span class="k">if</span> <span class="n">sum_ratio</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="c"># Get the raster_axes&#39; current bounds</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+            <span class="n">fsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
+            <span class="n">fig_ratio</span> <span class="o">=</span> <span class="n">fsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">fsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">pad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axes_pad</span>
+            <span class="k">if</span> <span class="n">fig_ratio</span> <span class="o">&lt;</span> <span class="mf">1.</span><span class="p">:</span>
+                <span class="n">pad</span> <span class="o">*=</span> <span class="n">fig_ratio</span>
+                
+            <span class="c"># Move the right in, and shrink the width</span>
+            <span class="n">new_width</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">width</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span> <span class="o">*</span> <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">)</span> <span class="o">-</span> <span class="n">pad</span>
+            <span class="n">sum_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum_ratio</span> <span class="o">*</span> <span class="n">pos</span><span class="o">.</span><span class="n">width</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+            <span class="n">new_width</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+    
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">set_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">(</span> \
+            <span class="p">[</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="o">+</span><span class="n">new_width</span><span class="o">+</span><span class="n">pad</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+            <span class="n">sum_width</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_raster_axes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Delete the SpikeSum object and axes.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="c"># Nothing to do. Already does not exist</span>
+                
+            <span class="c"># Resize the raster_axes</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">pos_sum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">set_position</span><span class="p">([</span><span class="n">pos</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">pos_sum</span><span class="o">.</span><span class="n">ymin</span><span class="p">,</span> \
+                <span class="n">pos</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">pos</span><span class="o">.</span><span class="n">height</span> <span class="o">+</span> <span class="n">pos_sum</span><span class="o">.</span><span class="n">height</span><span class="p">])</span>
+            
+            <span class="c"># Turn on the x-axis tick labels</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raster_axes</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="c"># Delete</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fig</span><span class="o">.</span><span class="n">delaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sum</span><span class="o">.</span><span class="n">_axes</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_sum_axes</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># Necessary?</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

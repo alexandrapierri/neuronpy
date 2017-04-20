@@ -1,0 +1,71 @@
+<html>
+<head>
+<script type="text/javascript">
+
+var axajObject = createRequestObject();
+
+function createRequestObject() {  
+    var xmlhttp;
+    try { xmlhttp=new ActiveXObject("Msxml2.XMLHTTP"); }
+  catch(e) {
+    try {
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    catch(e) {
+        xmlhttp=null;
+    }
+  }
+  if(!xmlhttp&&typeof XMLHttpRequest!="undefined") {
+    xmlhttp=new XMLHttpRequest();
+  }
+    return  xmlhttp;
+}
+
+function sendRequest(event) {
+    var code = document.getElementById("code").value;
+    if (code.length > 0 && event.keyCode == 13) {
+        var ecode = encodeURIComponent(code);
+        var req = "/eval?code=" + ecode;
+        alert(req)
+        try{
+            axajObject.open("GET", req, true);
+            axajObject.setRequestHeader('Content-Type',  "text/html");
+            axajObject.onreadystatechange = handleResponse;
+            axajObject.send("");
+        }
+        catch(e){
+            // caught an error
+            alert('Request send failed.');
+        }
+        finally{}
+    }
+}
+
+function handleResponse() {
+    if(axajObject.readyState == 4){
+        var response = axajObject.responseText;
+        var code = document.getElementById("code").value;
+        var res = "<p>Result of " + code + ":&nbsp;&nbsp;" + response + "</p>";
+        document.getElementById("output").innerHTML = res; 
+    }
+}
+</script>
+
+<style type="text/css">
+    #container{text-align:center;width:550px;border:1px solid #387CAF}
+    #output{text-align:center;font-size:14px;font-weight:bold}
+</style>
+
+</head>
+    
+<body>
+    <div id="container">
+        <h3>Simplest possible AJAX SAGE calculator.</h3> 
+        <p>Type in some valid SAGE code a hit enter</p><br/><br/>
+        Code:&nbsp;<input type="text" id="code" name="code" onkeypress="sendRequest(event)"></label>&nbsp;
+        <br/><br/>
+        <span id="output"></span>
+        <br/><br/><br/><br/>
+    </div>
+</body>
+</html>

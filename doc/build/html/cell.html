@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Cell &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="index.html" />
+    <link rel="up" title="Neuron Objects" href="nrnobjects.html" />
+    <link rel="next" title="Utilities" href="util.html" />
+    <link rel="prev" title="Neuron Objects" href="nrnobjects.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="util.html" title="Utilities"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="nrnobjects.html" title="Neuron Objects"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="nrnobjects.html" accesskey="U">Neuron Objects</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="cell">
+<h1>Cell<a class="headerlink" href="#cell" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuronpy.nrnobjects.cell"></span><p>Generic NEURON cell object. Provides template abstract methods and a generic 
+design for NEURON cell models.</p>
+<p>AUTHORS:
+- Thomas McTavish (2010-11-04).
+- Thomas McTavish (2011-11-06) Update for cleaner docstring and error reporting.
+- Thomas McTavish (2012-02-04) Added _resolve_attr to retrieve attributes,</p>
+<blockquote>
+<div>sub-attributes, and sub-elements via strings.</div></blockquote>
+<dl class="class">
+<dt id="neuronpy.nrnobjects.cell.Cell">
+<em class="property">class </em><tt class="descclassname">neuronpy.nrnobjects.cell.</tt><tt class="descname">Cell</tt><big>(</big><em>nameprefix=''</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic cell template for NEURON cell objects.</p>
+<p>Subclasses can override <tt class="xref py py-func docutils literal"><span class="pre">__init__()</span></tt> completely, 
+or do some of their own initialization first, and then 
+let <a class="reference internal" href="#neuronpy.nrnobjects.cell.Cell" title="neuronpy.nrnobjects.cell.Cell"><tt class="xref py py-class docutils literal"><span class="pre">Cell</span></tt></a> do its initializing, and then the 
+subclass can finish. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ChildCell</span><span class="p">(</span><span class="n">Cell</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># Do some stuff</span>
+        <span class="n">Cell</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c"># Do some more stuff</span>
+</pre></div>
+</div>
+<p>You might have to get fancy with arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ChildCell</span><span class="p">(</span><span class="n">Cell</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">someparameter</span><span class="o">=</span><span class="n">someval</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c"># Do some stuff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">someparameter</span> <span class="o">=</span> <span class="n">someparameter</span>
+        <span class="n">Cell</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c"># Do some more stuff</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.build_subsets">
+<tt class="descname">build_subsets</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.build_subsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.build_subsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build section list iterators. This defines the &#8216;all&#8217;, 
+SectionList, but subclasses may want to define others. 
+If overriden, call Cell.build_subsets(self) to create the &#8216;all&#8217;
+SectionList.</p>
+<p>For example, in a subclass with two dendrites, 
+<tt class="docutils literal"><span class="pre">self.dend[0]</span></tt> and <tt class="docutils literal"><span class="pre">self.dend[1]</span></tt> already defined, 
+we can add them to a &#8220;dendlist&#8221; iterator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Cell</span><span class="o">.</span><span class="n">build_subsets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="c"># Make &#39;all&#39; iterator</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dendlist</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">SectionList</span><span class="p">()</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dendlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dendlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.build_topology">
+<tt class="descname">build_topology</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.build_topology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.build_topology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect the sections of the cell to build a tree. &#8220;0&#8221; ends are
+toward the soma and &#8220;1&#8221; ends are distal. For example, to connect 
+the &#8220;0&#8221; end of a dendrite to the &#8220;1&#8221; end of the soma:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>  
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.connect2target">
+<tt class="descname">connect2target</tt><big>(</big><em>target</em>, <em>thresh=10</em><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.connect2target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.connect2target" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a new <tt class="xref py py-class docutils literal"><span class="pre">NetCon</span></tt> with this cell&#8217;s membrane
+potential at the soma as the source (i.e. the spike detector)
+onto the target passed in (i.e. a synapse on a cell).
+Subclasses may override with other spike detectors.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.create_sections">
+<tt class="descname">create_sections</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.create_sections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.create_sections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the sections of the cell. Remember to do this
+in the form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">soma</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">Section</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;soma&#39;</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.create_synapses">
+<tt class="descname">create_synapses</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.create_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.create_synapses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create synapses (such as ExpSyn) at various
+segments and add them to self.synlist.</p>
+<p>For example, in a ball-and-stick cell with a soma and single
+dendrite, to add an exponentially decaying (tau = 2 ms) synapse 
+in the middle of the dendrite:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">syn</span> <span class="o">=</span> <span class="n">nrn</span><span class="o">.</span><span class="n">ExpSyn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+<span class="n">syn</span><span class="o">.</span><span class="n">tau</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">synlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">syn</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.define_biophysics">
+<tt class="descname">define_biophysics</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.define_biophysics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.define_biophysics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign the membrane properties across the cell. For example:</p>
+<dl class="docutils">
+<dt>for sec in self.all: # &#8216;all&#8217; exists in parent object.</dt>
+<dd>sec.Ra = 100    # Axial resistance in Ohm * cm
+sec.cm = 1      # Membrane capacitance in micro Farads / cm^2</dd>
+</dl>
+<p># Insert active Hodgkin-Huxley current in the soma
+self.soma.insert(&#8216;hh&#8217;)
+self.soma.gnabar_hh = 0.12  # Sodium conductance in S/cm2
+self.soma.gkbar_hh = 0.036  # Potassium conductance in S/cm2
+self.soma.gl_hh = 0.0003    # Leak conductance in S/cm2
+self.soma.el_hh = -54.3     # Reversal potential in mV</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.define_geometry">
+<tt class="descname">define_geometry</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.define_geometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.define_geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the 3D geometry of the cell. The length, diameter, and
+number of segments should be set for each section as well as
+the section&#8217;s (x,y,z) coordinates, if necessary. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">soma</span><span class="o">.</span><span class="n">diam</span> <span class="o">=</span> <span class="mf">12.6157</span> <span class="c"># microns</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="o">.</span><span class="n">L</span> <span class="o">=</span> <span class="mi">200</span>                      <span class="c"># microns</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="o">.</span><span class="n">diam</span> <span class="o">=</span> <span class="mi">1</span>                     <span class="c"># microns</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">dend</span><span class="o">.</span><span class="n">nseg</span> <span class="o">=</span> <span class="mi">5</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.is_art">
+<tt class="descname">is_art</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.is_art"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.is_art" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to check if we are an integrate-and-fire artificial cell.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.rotateZ">
+<tt class="descname">rotateZ</tt><big>(</big><em>theta</em><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.rotateZ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.rotateZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate the cell about the Z axis.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuronpy.nrnobjects.cell.Cell.set_position">
+<tt class="descname">set_position</tt><big>(</big><em>x</em>, <em>y</em>, <em>z</em><big>)</big><a class="reference internal" href="_modules/neuronpy/nrnobjects/cell.html#Cell.set_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuronpy.nrnobjects.cell.Cell.set_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the base location in 3D and move all other
+parts of the cell relative to that location.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="nrnobjects.html"
+                        title="previous chapter">Neuron Objects</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="util.html"
+                        title="next chapter">Utilities</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/cell.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="util.html" title="Utilities"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="nrnobjects.html" title="Neuron Objects"
+             >previous</a> |</li>
+        <li><a href="index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="api.html" >Source Reference</a> &raquo;</li>
+          <li><a href="nrnobjects.html" >Neuron Objects</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>

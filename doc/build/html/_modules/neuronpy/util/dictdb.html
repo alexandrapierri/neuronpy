@@ -1,0 +1,495 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>neuronpy.util.dictdb &mdash; neuronpy 0.1.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="top" title="neuronpy 0.1.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for neuronpy.util.dictdb</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">Interface for a simple data store where the root and subtables are nested </span>
+<span class="sd">Python :py:class:`dict` objects.</span>
+
+<span class="sd">AUTHORS:</span>
+
+<span class="sd">- THOMAS MCTAVISH (2010-03-01): initial version, 0.1</span>
+
+<span class="sd">EXAMPLES::</span>
+<span class="sd">    </span>
+<span class="sd">    from neuronpy.util import dictdb</span>
+<span class="sd">    import datetime</span>
+<span class="sd">    </span>
+<span class="sd">    the_dict = { \</span>
+<span class="sd">        &#39;sub1&#39; : { \</span>
+<span class="sd">            &#39;key_a&#39; : { \</span>
+<span class="sd">                &#39;key_a_a&#39; : 1, \</span>
+<span class="sd">                &#39;time_stamp&#39; : \</span>
+<span class="sd">                    datetime.datetime(2010, 7, 23, 18, 43, 36, 640692), \</span>
+<span class="sd">                &#39;key_a_b&#39; : &#39;ABCDEFG&#39; }, \</span>
+<span class="sd">            &#39;key_b&#39; : [1,2,3], \</span>
+<span class="sd">            &#39;key_c&#39; : { \</span>
+<span class="sd">                &#39;key_c_a&#39; : 2, \</span>
+<span class="sd">                &#39;key_c_b&#39; : &#39;HIJKLMNO&#39; }}, \</span>
+<span class="sd">        &#39;sub2&#39; : { \</span>
+<span class="sd">            &#39;key_a&#39; : { \</span>
+<span class="sd">                &#39;key_a_a&#39; : 2, \</span>
+<span class="sd">                &#39;time_stamp&#39; : \</span>
+<span class="sd">                    datetime.datetime(2010, 8, 23, 18, 43, 36, 640692), \</span>
+<span class="sd">                &#39;key_a_b&#39; : &#39;XYZPDQ&#39; }, \</span>
+<span class="sd">            &#39;key_b&#39; : [4,5,6], \</span>
+<span class="sd">            &#39;key_c&#39; : { \</span>
+<span class="sd">                &#39;key_c_a&#39; : 1, \</span>
+<span class="sd">                &#39;key_c_b&#39; : &#39;ABCDEFG&#39; }}, \</span>
+<span class="sd">        &#39;different_sub1&#39; : { \</span>
+<span class="sd">            &#39;different_key_a&#39; : { \</span>
+<span class="sd">                &#39;different_key_a_a&#39; : 3, \</span>
+<span class="sd">                &#39;different_key_a_b&#39; : [1,2,3,4,5] }, \</span>
+<span class="sd">            &#39;different_key_b&#39; : None, \</span>
+<span class="sd">            &#39;different_key_c&#39; : { \</span>
+<span class="sd">                &#39;different_key_c_a&#39; : 2.0, \</span>
+<span class="sd">                &#39;different_key_c_b&#39; : [&#39;a&#39;, &#39;b&#39;, &#39;c&#39;] }} \</span>
+<span class="sd">    }</span>
+
+<span class="sd">Nodes ``&#39;sub1_a&#39;``, ``&#39;sub1_b&#39;``, and ``&#39;different_sub1_a&#39;`` refer to trunk</span>
+<span class="sd">nodes, which may be thought of as records in the database.</span>
+<span class="sd">Notice that in this dict, subdictionaries can each be of arbitrary depth, and </span>
+<span class="sd">contain any data type that can be put into a dict. This example shows records </span>
+<span class="sd">``&#39;sub1_a&#39;`` and  ``&#39;sub1_b&#39;`` share the same structure, but ``different_sub1``</span>
+<span class="sd">contains different data types.</span>
+
+<span class="sd">There are two related functions for retrieving records: :func:`filter_dict` and </span>
+<span class="sd">:func:`match`. Both approaches use user-defined :py:keyword:`lambda` functions.</span>
+<span class="sd">The :func:`filter_dict` function is itself a generator function that operates </span>
+<span class="sd">on ``(key, value, parent_keys)`` tuples. This function therefore allows </span>
+<span class="sd">any of these values to be ignored and one can search for keys or values </span>
+<span class="sd">irrespective of their key associations.</span>
+
+<span class="sd">The :func:`match` method permits multiple queries where a given key meets some</span>
+<span class="sd">condition. The key and the</span>
+<span class="sd">condition as a :py:keyword:`lambda` function  are provided in a tuple: </span>
+<span class="sd">``(&#39;key&#39;, lambda v: &lt;some_operation_with_v&gt;)`` where *&quot;some_operation_with_v&quot;* </span>
+<span class="sd">evaluates to ``True`` or ``False``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># While this software is under the permissive MIT License, </span>
+<span class="c"># (http://www.opensource.org/licenses/mit-license.php)</span>
+<span class="c"># We ask that you cite the neuronpy package (or tools used in this package)</span>
+<span class="c"># in any publications and contact the author with your referenced publication.</span>
+<span class="c">#</span>
+<span class="c"># Format:</span>
+<span class="c"># McTavish, T.S. NeuronPy library, version 0.1, http://bitbucket.org/tommctavish/neuronpy</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2010 Thomas S. McTavish</span>
+<span class="c"># </span>
+<span class="c"># Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="c"># of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="c"># in the Software without restriction, including without limitation the rights</span>
+<span class="c"># to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="c"># copies of the Software, and to permit persons to whom the Software is</span>
+<span class="c"># furnished to do so, subject to the following conditions:</span>
+<span class="c"># </span>
+<span class="c"># The above copyright notice and this permission notice shall be included in</span>
+<span class="c"># all copies or substantial portions of the Software.</span>
+<span class="c"># </span>
+<span class="c"># THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="c"># IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="c"># FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="c"># AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="c"># LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="c"># OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="c"># THE SOFTWARE.</span>
+
+<div class="viewcode-block" id="filter_dict"><a class="viewcode-back" href="../../../dictdb.html#neuronpy.util.dictdb.filter_dict">[docs]</a><span class="k">def</span> <span class="nf">filter_dict</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="bp">True</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Filter a dict by some function on ``(key, value, parent_key)`` tuples.</span>
+<span class="sd">    </span>
+<span class="sd">    :param the_dict: The dict to filter.</span>
+<span class="sd">    </span>
+<span class="sd">    :param predicate: A :py:keyword:`lambda` function on ``(k, v, p)``, </span>
+<span class="sd">        key, value, key_parent tuples. Where ``k`` and ``v`` are their normal,</span>
+<span class="sd">        ``key-value``s and where ``p`` is a list of sub-dict keys, from the </span>
+<span class="sd">        trunk of the_dict to the current key, ``k``.</span>
+<span class="sd">        </span>
+<span class="sd">    EXAMPLES:</span>
+
+<span class="sd">    Retrieve a subdict that contains any value with ``&#39;ABCDEFG&#39;``. In this </span>
+<span class="sd">    case, ``k`` and ``p`` in the lambda function are ignored.</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        filtered = dict(filter_dict(the_dict, lambda k, v, p: v==&#39;ABCDEFG&#39;))</span>
+<span class="sd">        </span>
+<span class="sd">    Retrieve a subdict where the ``&#39;time_stamp&#39;`` is greater than 30 days.</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        def date_filter(k, v, p):</span>
+<span class="sd">            return k == &#39;time_stamp&#39; and \</span>
+<span class="sd">                    (datetime.datetime.now() - v).days &gt;= 30</span>
+<span class="sd">                    </span>
+<span class="sd">        filtered = dict(filter_dict(the_dict, date_filter(k, v, p)))</span>
+<span class="sd">    </span>
+<span class="sd">    If a sub-key is not unique, then we can query the parent keys. In this </span>
+<span class="sd">    case, ``p`` is a list of keys starting from the first sub-dict to the </span>
+<span class="sd">    current key. Therefore, ``k == p[-1]``. This example searches for string</span>
+<span class="sd">    &#39;ABCDEF&#39;, but mandates that ``k == &#39;key_c_b&#39;`` and the parent key is</span>
+<span class="sd">    ``p == &#39;key_c&#39;``.</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        def f(k, v, p):</span>
+<span class="sd">            return k == &#39;key_c_b&#39; and len(p) &gt;= 2 and p[-2] == &#39;key_c&#39;</span>
+<span class="sd">                    </span>
+<span class="sd">        filtered = dict(filter_dict(the_dict, f(k, v, p)))</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parent_keys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">the_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">parent_keys</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">parent_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_filter_dict_sub</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">parent_keys</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span>
+            </div>
+<span class="k">def</span> <span class="nf">_filter_dict_sub</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="n">the_dict</span><span class="p">,</span> <span class="n">parent_keys</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sub-function to filter_dict for recursing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">the_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">parent_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_filter_dict_sub</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">parent_keys</span><span class="p">):</span>
+            <span class="n">parent_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">predicate</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">parent_keys</span><span class="p">):</span>
+            <span class="n">parent_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="n">parent_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">False</span>
+    
+<div class="viewcode-block" id="match"><a class="viewcode-back" href="../../../dictdb.html#neuronpy.util.dictdb.match">[docs]</a><span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s">&#39;AND&#39;</span><span class="p">,</span> <span class="n">search_type</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the root items of ``the_dict`` where </span>
+<span class="sd">    nested keys match the conditions to some number of queries.</span>
+<span class="sd">    </span>
+<span class="sd">    :param the_dict: The :py:class:`dict` to search.</span>
+
+<span class="sd">    :param queries: A tuple or list of 2- (or preferrably 3-) element tuples </span>
+<span class="sd">        with the first element being the nested key to search for and the </span>
+<span class="sd">        second tuple is the condition on that key&#39;s value. If a query cannot </span>
+<span class="sd">        be processed, it will be ignored, but a warning will print.</span>
+<span class="sd">        </span>
+<span class="sd">        An optional third element can be specified as the list of parent</span>
+<span class="sd">        keys to help speed the search query and also help guarantee precise </span>
+<span class="sd">        results. By default, the first key found in any nested dict that </span>
+<span class="sd">        matches the key being searched for in the </span>
+<span class="sd">        query (the first element in the tuple) will be the only key evaluated. </span>
+<span class="sd">        The search algorithm will not continue looking for the key in other </span>
+<span class="sd">        nested dicts. Therefore, duplicate keys in nested dicts should be </span>
+<span class="sd">        avoided. If they are used, however, then you can specify the key of </span>
+<span class="sd">        the parent.</span>
+
+<span class="sd">        .. Note::</span>
+<span class="sd">            </span>
+<span class="sd">            It is efficient to specify the parent keys as much as possible</span>
+<span class="sd">            because the query key may be nested quite deep. Using parent keys</span>
+<span class="sd">            permits a more direct lookup of the query key.</span>
+<span class="sd">        </span>
+<span class="sd">    :param mode: Is ``&#39;AND&#39;`` by default and can be ``&#39;OR&#39;``. To mix,</span>
+<span class="sd">        ``&#39;AND&#39;`` and ``&#39;OR&#39;`` queries, retrieve the sub-dictionary in one </span>
+<span class="sd">        condition and then call this function again passing in that</span>
+<span class="sd">        sub-dictionary with queries for the other condition.</span>
+<span class="sd">        </span>
+<span class="sd">        .. Note::</span>
+<span class="sd">            </span>
+<span class="sd">            Two or more ``&#39;AND&#39;`` queries prune a copy of the dictionary. The</span>
+<span class="sd">            first query returns a subdictionary that the second query operates</span>
+<span class="sd">            on and so forth. Searches through the subdictionaries will </span>
+<span class="sd">            therefore be faster if the first queries prune more of the original</span>
+<span class="sd">            dict than subsequent queries. Likewise, when mixing ``&#39;AND&#39;`` and </span>
+<span class="sd">            ``&#39;OR&#39;`` queries, it is more efficient to process ``&#39;AND&#39;``</span>
+<span class="sd">            queries first.</span>
+<span class="sd">            </span>
+<span class="sd">    :param search_type: By default is 0, but can be 1, or 2. Searches are</span>
+<span class="sd">        depth-first. This number specifies what is to happen when a key (and</span>
+<span class="sd">        any parent keys) are found:</span>
+<span class="sd">            </span>
+<span class="sd">        - ``0``</span>
+<span class="sd">            Shallow search. When a match is found exit up to the root dict and </span>
+<span class="sd">            do not continue searching the trunk this branch is on.</span>
+<span class="sd">        </span>
+<span class="sd">        - ``1``</span>
+<span class="sd">            Do not continue searching this branch.</span>
+<span class="sd">            </span>
+<span class="sd">        - ``2``</span>
+<span class="sd">            Continue search this branch for sub-keys with the same value.</span>
+<span class="sd">            </span>
+
+<span class="sd">    :return: A sub-dict of ``the_dict`` where nested keys match the conditions</span>
+<span class="sd">        to queries. The elements in the returned dict are</span>
+<span class="sd">        copies of ``the_dict``, which remains unaltered.</span>
+<span class="sd">    </span>
+<span class="sd">    EXAMPLES:</span>
+<span class="sd">        </span>
+<span class="sd">    To search for records where ``&#39;key_a_a&#39; == 2``:</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        subdict = dictdb.match(the_dict, (&#39;key_a_a&#39;,lambda v: v==2))</span>
+<span class="sd">        for key in subdict.keys():</span>
+<span class="sd">            print key</span>
+<span class="sd">    </span>
+<span class="sd">    This should print ``sub2``.</span>
+<span class="sd">    </span>
+<span class="sd">    To make compound queries, pass a list of query-tuples.</span>
+<span class="sd">        </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        subdict = dictdb.match(the_dict, [ \</span>
+<span class="sd">                (&#39;key_a_a&#39;,lambda v: v==2,[&#39;key_a&#39;]), \</span>
+<span class="sd">                (&#39;different_key_a_b&#39;,lambda v: sum(v)&gt; 3,[&#39;different_key_a&#39;]) \</span>
+<span class="sd">                ], \</span>
+<span class="sd">                mode=&#39;OR&#39;)</span>
+<span class="sd">        for key in subdict.keys():</span>
+<span class="sd">            print key</span>
+<span class="sd">    </span>
+<span class="sd">    This should print ``sub2`` and ``different_sub1_a``.</span>
+<span class="sd">    </span>
+<span class="sd">    In this case, each query is a list of 3-element tuples. The last</span>
+<span class="sd">    element in the tuple specifies the parent dict of the particular key being</span>
+<span class="sd">    searched for. This also makes an OR search of the terms.</span>
+<span class="sd">    </span>
+<span class="sd">    For complex or custom data types and expressions, you can define your own </span>
+<span class="sd">    function and pass that in as the second parameter in the query. The following</span>
+<span class="sd">    example tests for a value in a list.</span>
+<span class="sd">        </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        def my_func(x, y):</span>
+<span class="sd">            return isinstance(x, list) and y in x</span>
+<span class="sd">        </span>
+<span class="sd">        subdict = dictdb.match(the_dict, \</span>
+<span class="sd">                (&#39;different_key_c_b&#39;, lambda v: my_func(v, &#39;b&#39;)))</span>
+<span class="sd">        for key in subdict.keys():</span>
+<span class="sd">            print key</span>
+<span class="sd">                </span>
+<span class="sd">    Here is another example that retrieves records with a timestamp older than</span>
+<span class="sd">    30 days.</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        subdict = dictdb.match(the_dict, \</span>
+<span class="sd">                (&#39;time_stamp&#39;, lambda v: (datetime.datetime.now() - x).days &gt;= 30))</span>
+<span class="sd">        for key in subdict.keys():</span>
+<span class="sd">            print key</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_copy</span> <span class="o">=</span> <span class="n">the_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">db_copy2</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">root_matches</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">calling_keys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sub_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">queries</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span><span class="n">queries</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">SyntaxError</span><span class="p">):</span>
+            <span class="n">warning</span> <span class="o">=</span> <span class="s">&#39;WARNING: Ignoring </span><span class="si">%(a)s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">query</span><span class="p">}</span>
+            <span class="n">warning</span> <span class="o">+=</span> <span class="s">&#39;   It needs to be a 2- or 3-element tuple.&#39;</span>
+            <span class="k">print</span> <span class="n">warning</span>
+        
+        <span class="n">key_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">query</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">UserWarning</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">query</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                    <span class="n">key_str</span> <span class="o">+=</span> <span class="s">&#39;[</span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">]&#39;</span>
+            <span class="k">except</span> <span class="ne">UserWarning</span><span class="p">:</span>
+                <span class="n">warning</span> <span class="o">=</span> <span class="s">&#39;WARNING:</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="n">warning</span> <span class="o">+=</span> <span class="s">&#39;   </span><span class="se">\&quot;</span><span class="si">%(a)s</span><span class="se">\&quot;\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;a&#39;</span><span class="p">:</span><span class="n">query</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span>
+                <span class="n">warning</span> <span class="o">+=</span> <span class="s">&#39;   is an incorrect parent key.</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="n">warning</span> <span class="o">+=</span> <span class="s">&#39;   It needs to be a list of string elements</span><span class="se">\n</span><span class="s">&#39;</span>
+                <span class="n">warning</span> <span class="o">+=</span> <span class="s">&#39;   specifying parent keys. Ignoring this list.&#39;</span>
+                <span class="k">print</span> <span class="n">warning</span>
+                <span class="n">key_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">_ex</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">_ex</span>
+            
+        <span class="n">key_str</span> <span class="o">+=</span> <span class="s">&#39;[</span><span class="se">\&#39;</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">query</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">]&#39;</span>
+        
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;AND&#39;</span><span class="p">:</span> <span class="c"># Erase calling_keys</span>
+            <span class="n">calling_keys</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">root_matches</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">_search_dict</span><span class="p">(</span><span class="n">db_copy</span><span class="p">,</span> <span class="n">key_str</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">root_matches</span><span class="p">,</span> <span class="n">calling_keys</span><span class="p">,</span> \
+        <span class="bp">False</span><span class="p">,</span> <span class="n">search_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;AND&#39;</span><span class="p">:</span>
+            <span class="n">db_copy2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">db_copy2</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">match_path</span> <span class="ow">in</span> <span class="n">root_matches</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">match_path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">the_id</span> <span class="o">=</span> <span class="n">match_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">db_copy2</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_copy</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span>                
+            <span class="n">db_copy</span> <span class="o">=</span> <span class="n">db_copy2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            
+    <span class="k">for</span> <span class="n">match_path</span> <span class="ow">in</span> <span class="n">root_matches</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">match_path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">the_id</span> <span class="o">=</span> <span class="n">match_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">sub_dict</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_copy</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">sub_dict</span>
+</div>
+<span class="k">def</span> <span class="nf">_search_dict</span><span class="p">(</span><span class="n">the_dict</span><span class="p">,</span> <span class="n">key_str</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">root_matches</span><span class="p">,</span> <span class="n">calling_keys</span><span class="p">,</span> \
+<span class="n">keyfound</span><span class="p">,</span> <span class="n">search_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Search ``the_dict`` for the given query. Append ``root_matches`` if</span>
+<span class="sd">    there is a match.</span>
+<span class="sd">    </span>
+<span class="sd">    :param the_dict: A dictionary object.</span>
+<span class="sd">    </span>
+<span class="sd">    :param key_str: Is a string of keys to attempt to get, which may include</span>
+<span class="sd">        any number of ancestors. Something in the form</span>
+<span class="sd">        ``&quot;[&#39;grandparent&#39;][&#39;parent_key&#39;][&#39;key_to_find&#39;]&quot;``.</span>
+<span class="sd">            </span>
+<span class="sd">    :param root_matches: The cumulative path of keys back to the root, for</span>
+<span class="sd">        each match is obtained.</span>
+<span class="sd">    </span>
+<span class="sd">    :param calling_keys: Record of of the calling keys. If a match is made, it</span>
+<span class="sd">        gets added to root_matches.</span>
+<span class="sd">        </span>
+<span class="sd">    :param keyfound: is a flag to determine if a matching key has been found.</span>
+<span class="sd">    </span>
+<span class="sd">    :param search_type: See description in :func:`match`.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: True if the key was found, regardless of whether there was a </span>
+<span class="sd">        match and False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">eval_str</span> <span class="o">=</span> <span class="s">&#39;the_dict&#39;</span> <span class="o">+</span> <span class="n">key_str</span>
+        <span class="c"># Test for existence. Will raise a KeyError if it does not exist</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">eval_str</span><span class="p">)</span>
+        <span class="n">keyfound</span> <span class="o">=</span> <span class="bp">True</span>
+        
+        <span class="c"># Now test the condition</span>
+        <span class="k">if</span> <span class="n">condition</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+            <span class="n">root_matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calling_keys</span><span class="p">[:])</span>
+        <span class="k">if</span> <span class="n">search_type</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span> <span class="c"># Return True to the fact that we found the key,</span>
+                        <span class="c"># not whether the match was made.</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">raise</span>
+    
+    <span class="c"># Key not found. Recurse, searching sub-dicts.</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">the_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="n">calling_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">keyfound</span> <span class="o">=</span> <span class="n">_search_dict</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">key_str</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">root_matches</span><span class="p">,</span> \
+                        <span class="n">calling_keys</span><span class="p">,</span> <span class="n">keyfound</span><span class="p">,</span> <span class="n">search_type</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span> <span class="c"># Probably tried to explore too deeply</span>
+                <span class="n">calling_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">False</span>
+        <span class="n">calling_keys</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">search_type</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">keyfound</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">calling_keys</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">search_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">keyfound</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">keyfound</span> <span class="o">=</span> <span class="bp">False</span>
+    
+    <span class="n">keyfound</span> <span class="o">=</span> <span class="bp">False</span>    
+    <span class="k">return</span> <span class="bp">False</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">neuronpy 0.1.5 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Thomas McTavish.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+    </div>
+  </body>
+</html>
